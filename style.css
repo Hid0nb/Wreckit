@@ -31,7 +31,7 @@ body {
 }
 
 #pause-btn {
-    position: absolute; top: 10px; right: 60px; z-index: 20;
+    position: absolute; top: 2px; right: 52px; z-index: 20;
     background: rgba(0,0,0,0.7); border: 2px solid #555; border-radius: 6px;
     color: #fff; font-size: 16px; width: 35px; height: 35px;
     display: none; justify-content: center; align-items: center; cursor: pointer;
