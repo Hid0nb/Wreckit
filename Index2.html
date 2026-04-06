@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -19,13 +19,6 @@
                 <p style="font-size: 10px; line-height: 1.5; color: #aaa; margin: 10px;">
                     Dodge Ralph's bricks!<br>Deeper levels require<br>more hits per window.
                 </p>
-                
-                <div id="checkpoint-selector">
-                    <button id="btn-prev-cp" class="cp-btn">◀</button>
-                    <span id="cp-text">START LVL: 1</span>
-                    <button id="btn-next-cp" class="cp-btn">▶</button>
-                </div>
-
                 <button id="btn-insert-coin" class="menu-btn blinking">INSERT COIN</button>
                 <button id="btn-skills" class="menu-btn">SKILL MAP</button>
             </div>
@@ -33,6 +26,7 @@
             <div id="skill-tree-overlay" class="overlay" style="display:none;">
                 <div id="skill-tree-header">
                     <div class="wrench-count">WRENCHES: <span id="ui-wrenches">0</span></div>
+                    <button id="btn-show-stats" class="header-btn">STATS</button>
                 </div>
                 
                 <div id="zoom-controls">
@@ -47,17 +41,41 @@
                     </div>
                 </div>
                 
-                <div id="node-modal" style="display:none;">
+                <div id="st-bottom-bar">
+                    <div id="checkpoint-selector">
+                        <button id="btn-prev-cp" class="cp-btn">◀</button>
+                        <span id="cp-text">START LVL: 1</span>
+                        <button id="btn-next-cp" class="cp-btn">▶</button>
+                    </div>
+                    <button id="btn-restart-run">PLAY</button>
+                </div>
+
+                <div id="node-modal" class="modal-ui" style="display:none;">
                     <h3 id="nm-title">Title</h3>
                     <p id="nm-desc">Description goes here...</p>
                     <p id="nm-cost">Cost</p>
                     <div class="nm-buttons">
                         <button id="nm-buy" class="nm-btn">UNLOCK</button>
-                        <button id="nm-close" class="nm-btn">CLOSE</button>
+                        <button id="nm-close" class="nm-btn nm-close-btn">CLOSE</button>
                     </div>
                 </div>
 
-                <button id="btn-restart-run">PLAY</button>
+                <div id="stats-modal" class="modal-ui" style="display:none;">
+                    <h3>PLAYER STATS</h3>
+                    <div class="stat-grid">
+                        <div class="stat-row"><span>MAX HP:</span> <span id="s-hp" class="stat-val"></span></div>
+                        <div class="stat-row"><span>HAMMER DMG:</span> <span id="s-dmg" class="stat-val"></span></div>
+                        <div class="stat-row"><span>COOLDOWN:</span> <span id="s-cd" class="stat-val"></span></div>
+                        <div class="stat-row"><span>CRIT CHANCE:</span> <span id="s-crit-c" class="stat-val"></span></div>
+                        <div class="stat-row"><span>CRIT MULT:</span> <span id="s-crit-m" class="stat-val"></span></div>
+                        <div class="stat-row"><span>DODGE CHANCE:</span> <span id="s-dodge" class="stat-val"></span></div>
+                        <div class="stat-row"><span>WRENCH MULT:</span> <span id="s-wm" class="stat-val"></span></div>
+                        <hr style="border-color:#444; width:100%;">
+                        <div class="stat-row" style="color:#ffd700;"><span>MAX LEVEL:</span> <span id="s-ml" class="stat-val"></span></div>
+                    </div>
+                    <button id="btn-close-stats" class="nm-btn nm-close-btn" style="margin-top:15px; width:100%;">CLOSE</button>
+                </div>
+
             </div>
         </div>
     </div>
