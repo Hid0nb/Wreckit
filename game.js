@@ -171,7 +171,6 @@ function loadGame() {
             saveData.maxLevel = parsed.maxLevel || 1;
             saveData.miniNodes = parsed.miniNodes || {};
         }
-        // Retroactively grant mini-nodes for already unlocked skills
         saveData.unlocked.forEach(id => { if (id !== 'node_base') saveData.miniNodes[id] = 6; });
     } catch (e) { console.warn("Save load failed", e); }
     if (!saveData.miniNodes) saveData.miniNodes = {};
@@ -353,7 +352,6 @@ function renderSkillTree() {
             lineCtx.beginPath(); lineCtx.moveTo(parent.x, parent.y); lineCtx.lineTo(data.x, data.y); lineCtx.stroke();
         }
 
-        // --- NEW MINI-NODE DOM GENERATION ---
         if (id !== 'node_base' && (reqMet || isUnlocked)) {
             let orbitRadius = data.type === 'keystone' ? 85 : (data.type === 'notable' ? 70 : 60);
             for(let i=0; i<6; i++) {
@@ -361,13 +359,11 @@ function renderSkillTree() {
                 let mx = data.x + Math.cos(angle) * orbitRadius;
                 let my = data.y + Math.sin(angle) * orbitRadius;
                 
-                // Draw connecting line on canvas
                 lineCtx.beginPath(); lineCtx.moveTo(data.x, data.y); lineCtx.lineTo(mx, my);
                 lineCtx.lineWidth = 2;
                 lineCtx.strokeStyle = (i < boughtMinis) ? '#4caf50' : ((i === boughtMinis && reqMet && !isUnlocked) ? '#ffd700' : '#333');
                 lineCtx.stroke();
                 
-                // Create clickable DOM element
                 let miniDiv = document.createElement('div');
                 let mClasses = ['skill-node', 'mini-node'];
                 if (i < boughtMinis) mClasses.push('unlocked');
@@ -398,7 +394,6 @@ function renderSkillTree() {
     }
 }
 
-// Modal Handlers
 document.getElementById('nm-close').addEventListener('click', () => { document.getElementById('node-modal').style.display = 'none'; vibe(10); });
 document.getElementById('btn-show-stats').addEventListener('click', () => { updateStatsModal(); document.getElementById('stats-modal').style.display = 'block'; vibe(10); });
 document.getElementById('btn-close-stats').addEventListener('click', () => { document.getElementById('stats-modal').style.display = 'none'; vibe(10); });
@@ -450,7 +445,6 @@ mapViewport.addEventListener('mousedown', (e) => { if(e.target.closest('.modal-u
 mapViewport.addEventListener('mouseleave', () => { isDragging = false; }); mapViewport.addEventListener('mouseup', () => { isDragging = false; });
 mapViewport.addEventListener('mousemove', (e) => { if (!isDragging) return; e.preventDefault(); mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform(); });
 
-// REBUILT PINCH-TO-ZOOM MATH
 mapViewport.addEventListener('touchstart', (e) => {
     if(e.target.closest('.modal-ui') || e.target.closest('.skill-node')) return;
     if (e.touches.length === 2) { 
@@ -536,16 +530,17 @@ let level = 1; let hp = 100, maxHp = 100; let gameState = 'START';
 let frameCount = 0, cameraShake = 0, wrenchesEarnedThisRun = 0;
 let currentWindowMaxHp = 0, currentBrickDmg = 0, currentBirdDmg = 0; let isGrinding = false; 
 
-// TURBO VARIABLES
+// TURBO & NEW VARIABLES
 let isTurboMode = false;
 let turboTimeRemaining = 0; 
+let fireTrails = [];
 
-let felix = { col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, shieldActive: false, shieldRegenTimer: 0, lastSwingTime: 0 };
+let felix = { col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, shieldActive: false, shieldRegenTimer: 0, lastSwingTime: 0, poisonTimer: 0, magicTimer: 0 };
 let ralph = { x: 180, y: 100, targetX: 180, timer: 0, state: 'IDLE' };
 let windows = []; let bricks = []; let particles = []; let birds = []; let floatTexts = [];
 
 function initLevel() {
-    windows = []; bricks = []; particles = []; birds = [];
+    windows = []; bricks = []; particles = []; birds = []; fireTrails = [];
     currentWindowMaxHp = Math.floor(100 * Math.pow(1.15, level - 1));
     currentBrickDmg = Math.floor(35 * Math.pow(1.15, level - 1) * statEnemyDmgMult);
     currentBirdDmg = Math.floor(20 * Math.pow(1.15, level - 1) * statEnemyDmgMult);
@@ -568,9 +563,16 @@ function initLevel() {
     }
     if (brokenCount === 0) { windows[0].hp = currentWindowMaxHp; windows[0].maxHp = currentWindowMaxHp; }
     
-    felix.col = 1; felix.row = 4; felix.invincibleTimer = 0;
+    felix.col = 1; felix.row = 4; felix.invincibleTimer = 0; felix.poisonTimer = 0; felix.magicTimer = 0;
     if (statShieldOnRoundStart && statShieldUnlocked) { felix.shieldActive = true; felix.shieldRegenTimer = 0; }
     ralph.state = 'IDLE';
+}
+
+function handleDeath() {
+    gameState = 'OVER'; stopMusic();
+    saveData.wrenches += Math.floor(wrenchesEarnedThisRun); saveGame(); 
+    if (wrenchesEarnedThisRun >= 1) setTimeout(() => sfx.cash(), 500);
+    setTimeout(() => { if (gameState === 'OVER') openSkillTree(); }, 3000);
 }
 
 function spawnParticles(x, y, color, count) { for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8 - 2, life: 20 + Math.random()*20, color: color }); }
@@ -582,6 +584,8 @@ function updatePhysics() {
     if (felix.invincibleTimer > 0) felix.invincibleTimer--;
     if (felix.actionTimer > 0) felix.actionTimer--;
 
+    let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
+
     if (isTurboMode) {
         if (turboTimeRemaining > 0) {
             turboTimeRemaining--;
@@ -591,14 +595,25 @@ function updatePhysics() {
         }
     }
 
+    // Debuff Logic
+    if (felix.poisonTimer > 0) {
+        felix.poisonTimer--;
+        if (frameCount % 30 === 0) {
+            let dotDmg = Math.max(1, Math.floor(currentBirdDmg * 0.2));
+            hp -= dotDmg; if (hp < 0) hp = 0;
+            spawnFloatText(fx, fy - 30, `-${fNum(dotDmg)}`, "#0f0");
+            if (hp <= 0) handleDeath();
+        }
+    }
+    if (felix.magicTimer > 0) felix.magicTimer--;
+
     if (statShieldUnlocked && !felix.shieldActive && felix.shieldRegenTimer > 0) {
         felix.shieldRegenTimer--;
-        if (felix.shieldRegenTimer <= 0) { felix.shieldActive = true; sfx.win(); spawnFloatText(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + 20, "SHIELD READY", "#0ff"); }
+        if (felix.shieldRegenTimer <= 0) { felix.shieldActive = true; sfx.win(); spawnFloatText(fx, fy + 20, "SHIELD READY", "#0ff"); }
     }
 
     if (statRegenPerSec > 0 && hp < maxHp && frameCount % 60 === 0) {
         hp = Math.min(maxHp, hp + statRegenPerSec);
-        let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
         spawnFloatText(fx, fy - 30, `+${fNum(statRegenPerSec)}`, "#0f0");
     }
 
@@ -626,9 +641,16 @@ function updatePhysics() {
     } else if (ralph.state === 'THROW') {
         ralph.timer++;
         if (ralph.timer === 15) { 
-            bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5, vy: -2, rot: 0 }); 
+            bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*2, vy: -2, rot: 0 }); 
             if (isTurboMode && Math.random() < 0.4) {
-                 bricks.push({ x: ralph.x + 15, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5 + 0.5, vy: -2.5, rot: 0 });
+                // Perfect Random Trajectory Math
+                let c1 = Math.floor(Math.random() * COLS);
+                let c2 = Math.floor(Math.random() * COLS);
+                if (c1 === c2) c2 = (c2 + 1) % COLS; // Guarantee diff lanes
+                let tx1 = PAD_X + c1 * CELL_W + CELL_W/2;
+                let tx2 = PAD_X + c2 * CELL_W + CELL_W/2;
+                bricks[bricks.length-1].vx = (tx1 - ralph.x) / 40; 
+                bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (tx2 - ralph.x) / 40, vy: -2.5, rot: 0 });
             }
             sfx.throw(); cameraShake = 5; 
         }
@@ -649,18 +671,60 @@ function updatePhysics() {
         }
     }
 
-    if (level >= 4 && Math.random() < 0.01 + (level * 0.001)) { birds.push({ x: -20, y: PAD_Y + Math.floor(Math.random() * ROWS) * CELL_H + CELL_H/2, vx: 3 + level*0.1 }); }
-    for(let i = birds.length-1; i>=0; i--) { birds[i].x += birds[i].vx; if(birds[i].x > 400) birds.splice(i, 1); }
+    // New Bird Spawner
+    let birdSpawnChance = 0.005 + (level * 0.0005);
+    if (level >= 4 && Math.random() < birdSpawnChance) { 
+        let type = 0;
+        let rand = Math.random();
+        if (level >= 50 && rand < 0.05) type = 5; 
+        else if (level >= 40 && rand < 0.10) type = 4;
+        else if (level >= 30 && rand < 0.15) type = 3; 
+        else if (level >= 20 && rand < 0.25) type = 2; 
+        else if (level >= 10 && rand < 0.40) type = 1; 
 
-    let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
+        let bSpeed = 2 + (level * 0.05); // slower base speed
+        let by = PAD_Y + Math.floor(Math.random() * ROWS) * CELL_H + CELL_H/2;
+        
+        if (type === 1) bSpeed *= 2;
+        if (type === 2) bSpeed *= 0.5;
+
+        birds.push({ x: -20, y: by, vx: bSpeed, type: type });
+    }
+
+    for (let i = birds.length-1; i>=0; i--) { 
+        let b = birds[i];
+        b.x += b.vx; 
+        if (b.type === 4 && frameCount % 8 === 0) fireTrails.push({ x: b.x, y: b.y + 5, life: 120 });
+        if (b.x > 400) birds.splice(i, 1); 
+    }
+
+    for (let i = fireTrails.length - 1; i >= 0; i--) {
+        let ft = fireTrails[i]; ft.life--;
+        if (ft.life <= 0) { fireTrails.splice(i, 1); continue; }
+        if (felix.invincibleTimer === 0 && Math.hypot(ft.x - fx, ft.y - fy) < 20) { takeDamage(currentBirdDmg * 0.5, fx, fy); }
+    }
 
     for (let i = bricks.length - 1; i >= 0; i--) {
         let b = bricks[i]; b.vy += 0.4; b.x += b.vx; b.y += b.vy; b.rot += 0.2;
         if (felix.invincibleTimer === 0 && Math.hypot(b.x - fx, b.y - fy) < 25) { bricks.splice(i, 1); takeDamage(currentBrickDmg, fx, fy); continue; }
         if (b.y > canvas.height + 50) bricks.splice(i, 1); 
     }
+    
     for (let i = birds.length - 1; i >= 0; i--) {
-        if (felix.invincibleTimer === 0 && Math.hypot(birds[i].x - fx, birds[i].y - fy) < 20) { birds.splice(i, 1); takeDamage(currentBirdDmg, fx, fy); }
+        let b = birds[i];
+        if (felix.invincibleTimer === 0 && Math.hypot(b.x - fx, b.y - fy) < (b.type === 2 ? 30 : 20)) { 
+            let actualDmg = currentBirdDmg;
+            if (b.type === 1) actualDmg *= 0.5;
+            if (b.type === 2) actualDmg *= 2.0;
+            
+            birds.splice(i, 1); 
+            let hitLanded = takeDamage(actualDmg, fx, fy); 
+
+            if (hitLanded) {
+                if (b.type === 3) { felix.poisonTimer = 300; spawnFloatText(fx, fy - 40, "POISONED!", "#0f0"); }
+                if (b.type === 5) { felix.magicTimer = 300; spawnFloatText(fx, fy - 40, "WEAKENED!", "#d0f"); }
+            }
+        }
     }
 
     for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life--; if (p.life <= 0) particles.splice(i, 1); }
@@ -668,10 +732,10 @@ function updatePhysics() {
 }
 
 function takeDamage(actualDmg, fx, fy) {
-    if (Math.random() < statDodgeChance) { spawnFloatText(fx, fy - 20, "DODGED!", "#aaa"); sfx.dodge(); return; }
+    if (Math.random() < statDodgeChance) { spawnFloatText(fx, fy - 20, "DODGED!", "#aaa"); sfx.dodge(); return false; }
     if (felix.shieldActive) {
         felix.shieldActive = false; felix.invincibleTimer = 60; felix.shieldRegenTimer = statShieldRegenTime; 
-        spawnParticles(fx, fy, '#0ff', 30); spawnFloatText(fx, fy - 20, "BLOCKED!", "#0ff"); sfx.jump(); vibe(20); return;
+        spawnParticles(fx, fy, '#0ff', 30); spawnFloatText(fx, fy - 20, "BLOCKED!", "#0ff"); sfx.jump(); vibe(20); return false;
     }
 
     hp -= actualDmg; if (hp < 0) hp = 0;
@@ -679,12 +743,8 @@ function takeDamage(actualDmg, fx, fy) {
 
     felix.invincibleTimer = statIFrames; sfx.hurt(); vibe([100, 50, 100]); cameraShake = 20; spawnParticles(fx, fy, '#00f', 20);
     
-    if (hp <= 0) {
-        gameState = 'OVER'; stopMusic();
-        saveData.wrenches += Math.floor(wrenchesEarnedThisRun); saveGame(); 
-        if (wrenchesEarnedThisRun >= 1) setTimeout(() => sfx.cash(), 500);
-        setTimeout(() => { if (gameState === 'OVER') openSkillTree(); }, 3000);
-    }
+    if (hp <= 0) handleDeath();
+    return true;
 }
 
 function handleInput(dx, dy) {
@@ -720,6 +780,7 @@ function handleFix() {
             if (w.hp <= 0) break;
 
             let dmg = statFixDmg;
+            if (felix.magicTimer > 0) dmg *= 0.5; // MAGIC DEBUFF
             if (Math.random() < statCritChance) { dmg *= statCritMult; spawnFloatText(wx, wy, "CRIT!", "#ff0"); }
             
             w.hp -= dmg; if (w.hp < 0) w.hp = 0; w.anim = 10;
@@ -787,6 +848,13 @@ function drawRender() {
         ctx.textAlign = 'left';
     }
 
+    fireTrails.forEach(ft => {
+        ctx.globalAlpha = ft.life / 120;
+        drawRect(ft.x - 5 + (Math.random()*2), ft.y - 5 + (Math.random()*2), 10, 10, '#f80');
+        drawRect(ft.x - 2, ft.y - 2, 4, 4, '#ff0');
+        ctx.globalAlpha = 1.0;
+    });
+
     windows.forEach(w => {
         let x = PAD_X + w.col * CELL_W; let y = PAD_Y + w.row * CELL_H;
         let animShake = w.anim > 0 ? (Math.random()-0.5)*4 : 0; if(w.anim > 0) w.anim--;
@@ -832,9 +900,24 @@ function drawRender() {
             let pct = 1 - (felix.shieldRegenTimer / statShieldRegenTime);
             ctx.beginPath(); ctx.arc(fx, fy - 5, 28, -Math.PI/2, (-Math.PI/2) + (Math.PI * 2 * pct)); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)'; ctx.stroke();
         }
+
+        // Draw active debuffs on Felix
+        if (felix.poisonTimer > 0 && Math.random() < 0.2) spawnParticles(fx, fy, '#0f0', 1);
+        if (felix.magicTimer > 0 && Math.random() < 0.2) spawnParticles(fx, fy, '#d0f', 1);
     }
 
-    birds.forEach(b => { drawRect(b.x, b.y, 15, 10, '#fff'); drawRect(b.x + (frameCount%10 < 5 ? 5 : 0), b.y-5, 10, 5, '#ddd'); });
+    birds.forEach(b => { 
+        let bw = 15, bh = 10, col = '#fff', wingCol = '#ddd';
+        if (b.type === 1) { bw = 12; bh = 8; col = '#8ff'; wingCol = '#0cc'; }
+        else if (b.type === 2) { bw = 25; bh = 18; col = '#631'; wingCol = '#310'; }
+        else if (b.type === 3) { col = '#2d2'; wingCol = '#080'; }
+        else if (b.type === 4) { col = '#f60'; wingCol = '#f00'; }
+        else if (b.type === 5) { col = '#90f'; wingCol = '#408'; }
+
+        drawRect(b.x - bw/2, b.y - bh/2, bw, bh, col); 
+        drawRect(b.x - bw/2 + (frameCount%10 < 5 ? bw/3 : 0), b.y - bh/2 - bh/2, bw/1.5, bh/2, wingCol); 
+    });
+
     bricks.forEach(b => { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot); drawRect(-10, -6, 20, 12, '#822'); ctx.restore(); });
     particles.forEach(p => drawRect(p.x, p.y, 4, 4, p.color));
     
