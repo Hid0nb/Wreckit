@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -26,7 +26,6 @@
             <div id="skill-tree-overlay" class="overlay" style="display:none;">
                 <div id="skill-tree-header">
                     <div class="wrench-count">WRENCHES: <span id="ui-wrenches">0</span></div>
-                    <button id="btn-show-stats" class="header-btn">STATS</button>
                 </div>
                 
                 <div id="zoom-controls">
@@ -42,6 +41,7 @@
                 </div>
                 
                 <div id="st-bottom-bar">
+                    <button id="btn-show-stats" class="header-btn">STATS</button>
                     <div id="checkpoint-selector">
                         <button id="btn-prev-cp" class="cp-btn">◀</button>
                         <span id="cp-text">START LVL: 1</span>
@@ -64,16 +64,17 @@
                     <h3>PLAYER STATS</h3>
                     <div class="stat-grid">
                         <div class="stat-row"><span>MAX HP:</span> <span id="s-hp" class="stat-val"></span></div>
+                        <div class="stat-row"><span>REGEN/sec:</span> <span id="s-reg" class="stat-val"></span></div>
+                        <div class="stat-row"><span>LIFESTEAL:</span> <span id="s-ls" class="stat-val"></span></div>
                         <div class="stat-row"><span>HAMMER DMG:</span> <span id="s-dmg" class="stat-val"></span></div>
-                        <div class="stat-row"><span>COOLDOWN:</span> <span id="s-cd" class="stat-val"></span></div>
-                        <div class="stat-row"><span>CRIT CHANCE:</span> <span id="s-crit-c" class="stat-val"></span></div>
-                        <div class="stat-row"><span>CRIT MULT:</span> <span id="s-crit-m" class="stat-val"></span></div>
-                        <div class="stat-row"><span>DODGE CHANCE:</span> <span id="s-dodge" class="stat-val"></span></div>
+                        <div class="stat-row"><span>AUTO-CAULK:</span> <span id="s-rot" class="stat-val"></span></div>
+                        <div class="stat-row"><span>CRIT MULT:</span> <span id="s-crit" class="stat-val"></span></div>
+                        <div class="stat-row"><span>MULTI-STRIKE:</span> <span id="s-ms" class="stat-val"></span></div>
+                        <div class="stat-row"><span>DODGE:</span> <span id="s-dodge" class="stat-val"></span></div>
+                        <div class="stat-row"><span>RALPH NERF:</span> <span id="s-nerf" class="stat-val"></span></div>
                         <div class="stat-row"><span>WRENCH MULT:</span> <span id="s-wm" class="stat-val"></span></div>
-                        <hr style="border-color:#444; width:100%;">
-                        <div class="stat-row" style="color:#ffd700;"><span>MAX LEVEL:</span> <span id="s-ml" class="stat-val"></span></div>
                     </div>
-                    <button id="btn-close-stats" class="nm-btn nm-close-btn" style="margin-top:15px; width:100%;">CLOSE</button>
+                    <button id="btn-close-stats" class="nm-btn nm-close-btn" style="margin-top:10px; width:100%;">CLOSE</button>
                 </div>
 
             </div>
