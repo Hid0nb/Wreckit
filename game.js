@@ -739,7 +739,7 @@ function takeDamage(actualDmg, fx, fy) {
     if (Math.random() < statDodgeChance) { spawnFloatText(fx, fy - 20, "DODGED!", "#aaa"); sfx.dodge(); return false; }
     if (felix.shieldActive) {
         felix.shieldActive = false; felix.invincibleTimer = 60; felix.shieldRegenTimer = statShieldRegenTime; 
-        spawnParticles(fx, fy, '#0ff', 30); spawnFloatText(fx, fy - 20, "BLOCKED!", "#0ff"); sfx.jump(); vibe(20); return false;
+        spawnParticles(fx, fy, '#0ff', 30); spawnFloatText(fx, fy - 20, "BLOCKED!", "#0ff"); sfx.jump(); vibe(20); return false; 
     }
 
     hp -= actualDmg; if (hp < 0) hp = 0;
@@ -988,12 +988,13 @@ function togglePause() {
     if (gameState === 'PLAY') {
         gameState = 'PAUSED';
         document.getElementById('pause-overlay').style.display = 'flex';
-        document.getElementById('pause-btn').style.display = 'none';
+        // Now hide the button in its new position
+        document.getElementById('pause-btn').style.opacity = '0.2'; 
         stopMusic();
     } else if (gameState === 'PAUSED') {
         gameState = 'PLAY';
         document.getElementById('pause-overlay').style.display = 'none';
-        document.getElementById('pause-btn').style.display = 'flex';
+        document.getElementById('pause-btn').style.opacity = '1';
         startMusic();
     }
 }
@@ -1004,6 +1005,8 @@ document.getElementById('btn-continue').addEventListener('click', togglePause);
 document.getElementById('btn-surrender').addEventListener('click', () => {
     if (gameState === 'PAUSED') {
         document.getElementById('pause-overlay').style.display = 'none';
+        // Reset the button state on surrender
+        document.getElementById('pause-btn').style.opacity = '1';
         handleDeath();
     }
 });
@@ -1013,7 +1016,9 @@ function launchGame() {
     document.getElementById('start-overlay').style.display = 'none'; document.getElementById('skill-tree-overlay').style.display = 'none';
     level = selectedCheckpoint; wrenchesEarnedThisRun = 0; calculateStats(); 
     felix.shieldActive = statShieldUnlocked; felix.shieldRegenTimer = 0; felix.lastSwingTime = 0;
+    // Keep button visible
     document.getElementById('pause-btn').style.display = 'flex';
+    document.getElementById('pause-btn').style.opacity = '1';
     initLevel(); gameState = 'PLAY'; startMusic();
 }
 
