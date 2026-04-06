@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
 <div id="arcade-cabinet">
+    <div id="fullscreen-btn" title="Toggle Fullscreen">⛶</div>
+    <div id="pause-btn" title="Pause Game">⏸️</div>
+
     <div id="screen-bezel">
         <div id="game-container" class="crt">
             <canvas id="gameCanvas" width="360" height="600"></canvas>
@@ -112,14 +115,9 @@
                 <div class="action-btn" id="btn-fix">FIX</div>
             </div>
         </div>
-        
-        <div class="lower-controls-bar">
-            <div id="pause-btn" title="Pause Game">⏸️</div>
-            <div id="fullscreen-btn" title="Toggle Fullscreen">⛶</div>
-        </div>
     </div>
 </div>
 
-<script src="game.js?v=17"></script>
+<script src="game.js?v=18"></script>
 </body>
 </html>
