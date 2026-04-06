@@ -12,7 +12,7 @@ function fNum(num) {
 
 let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
 let selectedCheckpoint = 1;
-let selectedNodeId = null; // Used for the modal
+let selectedNodeId = null;
 
 const SKILL_TREE = {
     'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
@@ -115,7 +115,7 @@ function renderSkillTree() {
             lineCtx.beginPath(); lineCtx.moveTo(parent.x, parent.y); lineCtx.lineTo(data.x, data.y); lineCtx.stroke();
         }
 
-        // Determine Icon
+        // Determine Icon Emoji based on Path
         let icon = '🔧'; 
         if (id.startsWith('pow') || id.startsWith('crit')) icon = '🔨';
         else if (id.startsWith('tnk') || id.startsWith('shld')) icon = '🛡️';
@@ -123,16 +123,16 @@ function renderSkillTree() {
         else if (id.startsWith('agi') || id.startsWith('dge')) icon = '⚡';
 
         let nodeDiv = document.createElement('div');
-        let classes = ['skill-node', `node-${data.type}`]; // normal, notable, keystone
+        let classes = ['skill-node', `node-${data.type}`]; // Injects 'node-core', 'node-normal', etc.
         if (isUnlocked) classes.push('unlocked');
         else if (reqMet) classes.push('available');
         else classes.push('locked');
         
         nodeDiv.className = classes.join(' ');
         nodeDiv.style.left = data.x + 'px'; nodeDiv.style.top = data.y + 'px';
-        nodeDiv.innerHTML = icon;
+        nodeDiv.innerHTML = icon; // INJECT ONLY THE EMOJI ORB
 
-        // POPUP MODAL CLICK EVENT
+        // Node Click Event -> Opens Modal
         nodeDiv.onclick = () => {
             selectedNodeId = id;
             document.getElementById('nm-title').innerText = data.name;
@@ -168,7 +168,7 @@ function renderSkillTree() {
     }
 }
 
-// Modal Button Hooks
+// Modal Click Events
 document.getElementById('nm-close').addEventListener('click', () => {
     document.getElementById('node-modal').style.display = 'none';
     vibe(10);
@@ -181,6 +181,7 @@ document.getElementById('nm-buy').addEventListener('click', () => {
         saveData.wrenches -= data.cost;
         saveData.unlocked.push(selectedNodeId);
         saveGame();
+        calculateStats(); // Recalculate stats immediately!
         document.getElementById('node-modal').style.display = 'none';
         renderSkillTree();
         vibe(30); sfx.cash();
@@ -203,14 +204,16 @@ function setZoom(newZoom) {
 document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(mapZoom + 0.2));
 document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(mapZoom - 0.2));
 
-// Prevent dragging from firing if clicking modal
+// Important: Prevent map dragging when interacting with the modal
 mapViewport.addEventListener('mousedown', (e) => { 
     if(e.target.closest('#node-modal')) return;
     isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY; 
 });
 mapViewport.addEventListener('mouseleave', () => { isDragging = false; });
 mapViewport.addEventListener('mouseup', () => { isDragging = false; });
-mapViewport.addEventListener('mousemove', (e) => { if (!isDragging) return; e.preventDefault(); mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform(); });
+mapViewport.addEventListener('mousemove', (e) => { 
+    if (!isDragging) return; e.preventDefault(); mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform(); 
+});
 
 mapViewport.addEventListener('touchstart', (e) => {
     if(e.target.closest('#node-modal')) return;
