@@ -199,7 +199,6 @@ let statClearBonusFlat = 0; let statClearBonusMult = 1;
 let statGrindYield = 0.6; let statInterestRate = 0;
 
 function calculateStats() {
-    // Tally Mini-Nodes First
     let miniPow = 0, miniTnk = 0, miniEco = 0, miniAgi = 0;
     for (let [id, count] of Object.entries(saveData.miniNodes)) {
         if (id.startsWith('pow') || id.startsWith('crit') || id.startsWith('rot')) miniPow += count;
@@ -208,7 +207,6 @@ function calculateStats() {
         else if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) miniAgi += count;
     }
 
-    // HP
     let hpFlat = miniTnk * 25; let hpMult = 1;
     if (hasSkill('tnk_1')) hpFlat += 50; if (hasSkill('tnk_2')) hpFlat += 500; if (hasSkill('tnk_3')) hpFlat += 5000;
     if (hasSkill('tnk_5')) hpFlat += 1e5; if (hasSkill('tnk_7')) hpFlat += 5e7;
@@ -217,7 +215,6 @@ function calculateStats() {
     if (hasSkill('tnk_9')) hpMult *= 10; if (hasSkill('tnk_11')) hpMult *= 50; if (hasSkill('tnk_max2')) hpMult *= 1000;
     maxHp = (100 + hpFlat) * hpMult; hp = maxHp;
     
-    // DMG
     let dmgFlat = miniPow * 5; let dmgMult = 1;
     if (hasSkill('pow_1')) dmgFlat += 50; if (hasSkill('pow_2')) dmgFlat += 250; if (hasSkill('pow_3')) dmgFlat += 2500;
     if (hasSkill('pow_5')) dmgFlat += 5e4; if (hasSkill('pow_7')) dmgFlat += 1e7;
@@ -226,51 +223,40 @@ function calculateStats() {
     if (hasSkill('pow_9')) dmgMult *= 10; if (hasSkill('pow_11')) dmgMult *= 50; if (hasSkill('pow_max2')) dmgMult *= 1000;
     statFixDmg = (50 + dmgFlat) * dmgMult;
 
-    // AGI & DODGE
     statHammerCooldownMs = hasSkill('agi_max') ? 0 : hasSkill('agi_5') ? 30 : hasSkill('agi_4') ? 60 : hasSkill('agi_3') ? 100 : hasSkill('agi_2') ? 150 : hasSkill('agi_1') ? 180 : 200;
     statDodgeChance = (miniAgi * 0.002) + (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.25 : 0) + (hasSkill('dge_max') ? 0.50 : 0);
     statIFrames = 90 + (hasSkill('agi_7') ? 30 : 0) + (hasSkill('agi_9') ? 60 : 0) + (hasSkill('agi_max2') ? 120 : 0);
     
-    // CRIT
     statCritChance = (hasSkill('crit_1') ? 0.10 : 0) + (hasSkill('crit_2') ? 0.30 : 0); statCritMult = hasSkill('crit_max') ? 5 : 2;
-    
-    // SHIELD
     statShieldUnlocked = hasSkill('shld_1'); statShieldRegenTime = hasSkill('shld_2') ? 300 : 900; statShieldOnRoundStart = hasSkill('shld_max');
 
-    // ECONOMY
     statWrenchMult = 1.0 + (miniEco * 0.02) + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_2') ? 0.5 : 0) + (hasSkill('eco_3') ? 2.0 : 0);
     if (hasSkill('eco_4')) statWrenchMult *= 5; if (hasSkill('eco_5')) statWrenchMult *= 20; if (hasSkill('eco_6')) statWrenchMult *= 100;
     if (hasSkill('eco_7')) statWrenchMult *= 1000; if (hasSkill('eco_max')) statWrenchMult *= 10000;
     if (hasSkill('eco_8')) statWrenchMult *= 5; if (hasSkill('eco_9')) statWrenchMult *= 10; if (hasSkill('eco_10')) statWrenchMult *= 50;
     if (hasSkill('eco_11')) statWrenchMult *= 100; if (hasSkill('eco_max2')) statWrenchMult *= 1000;
 
-    // LEVEL CLEAR & GRIND YIELD & INTEREST
     statClearBonusFlat = (hasSkill('clr_1') ? 50 : 0) + (hasSkill('clr_2') ? 250 : 0);
     statClearBonusMult = hasSkill('clr_max') ? 2 : 1;
     statGrindYield = 0.6 + (hasSkill('grnd_1') ? 0.05 : 0) + (hasSkill('grnd_2') ? 0.05 : 0) + (hasSkill('grnd_max') ? 0.10 : 0);
     statInterestRate = hasSkill('int_max') ? 0.005 : (hasSkill('int_2') ? 0.0025 : (hasSkill('int_1') ? 0.001 : 0));
 
-    // ROT (Auto-Caulk)
     statRotChance = 0; if (hasSkill('rot_1')) statRotChance = 0.05; if (hasSkill('rot_2')) statRotChance = 0.10; 
     if (hasSkill('rot_4')) statRotChance = 0.15; if (hasSkill('rot_max')) statRotChance = 0.30;
     statRotMult = 0.2; if (hasSkill('rot_3')) statRotMult = 0.4; if (hasSkill('rot_5')) statRotMult = 1.0; if (hasSkill('rot_max')) statRotMult = 3.0;
 
-    // LIFESTEAL & REGEN
     statRegenPerSec = 0; if (hasSkill('reg_1')) statRegenPerSec += 100; if (hasSkill('reg_2')) statRegenPerSec += 5000; 
     if (hasSkill('reg_3')) statRegenPerSec += 250000; if (hasSkill('reg_4')) statRegenPerSec += 1e7; if (hasSkill('reg_5')) statRegenPerSec += 5e8;
     statLifesteal = hasSkill('reg_max') ? 0.02 : 0;
 
-    // RALPH NERF
     statRalphSpeedMult = 1.0; if (hasSkill('nrf_2')) statRalphSpeedMult -= 0.1; if (hasSkill('nrf_4')) statRalphSpeedMult -= 0.15; if (hasSkill('nrf_max')) statRalphSpeedMult -= 0.50;
     statEnemyDmgMult = 1.0; if (hasSkill('nrf_1')) statEnemyDmgMult -= 0.1; if (hasSkill('nrf_3')) statEnemyDmgMult -= 0.15; 
     if (hasSkill('nrf_5')) statEnemyDmgMult -= 0.25; if (hasSkill('nrf_max')) statEnemyDmgMult -= 0.25;
 
-    // MULTI-STRIKE
     statMultiStrike = 0; if (hasSkill('ms_1')) statMultiStrike = 0.1; if (hasSkill('ms_2')) statMultiStrike = 0.25; 
     if (hasSkill('ms_3')) statMultiStrike = 0.50; if (hasSkill('ms_4')) statMultiStrike = 1.0; 
     if (hasSkill('ms_5')) statMultiStrike = 1.5; if (hasSkill('ms_max')) statMultiStrike = 2.0;
 
-    // TURBO TIMER
     statTurboTimeBonus = (hasSkill('trb_1') ? 2 : 0) + (hasSkill('trb_2') ? 3 : 0) + (hasSkill('trb_3') ? 5 : 0) + (hasSkill('trb_max') ? 15 : 0);
 }
 
@@ -351,7 +337,6 @@ function openNodeModal(id) {
     document.getElementById('ui-wrenches').innerText = fNum(saveData.wrenches);
 }
 
-
 function renderSkillTree() {
     document.getElementById('ui-wrenches').innerText = fNum(saveData.wrenches);
     const container = document.getElementById('nodes-container'); container.innerHTML = '';
@@ -368,19 +353,32 @@ function renderSkillTree() {
             lineCtx.beginPath(); lineCtx.moveTo(parent.x, parent.y); lineCtx.lineTo(data.x, data.y); lineCtx.stroke();
         }
 
-        // Draw Mini-Nodes orbiting the main node
+        // --- NEW MINI-NODE DOM GENERATION ---
         if (id !== 'node_base' && (reqMet || isUnlocked)) {
+            let orbitRadius = data.type === 'keystone' ? 85 : (data.type === 'notable' ? 70 : 60);
             for(let i=0; i<6; i++) {
                 let angle = (i * Math.PI * 2) / 6 - (Math.PI / 2);
-                let mx = data.x + Math.cos(angle) * 50; 
-                let my = data.y + Math.sin(angle) * 50;
-                lineCtx.beginPath();
-                lineCtx.arc(mx, my, 7, 0, Math.PI*2);
-                lineCtx.fillStyle = (i < boughtMinis) ? '#4caf50' : '#f33';
-                lineCtx.fill();
+                let mx = data.x + Math.cos(angle) * orbitRadius;
+                let my = data.y + Math.sin(angle) * orbitRadius;
+                
+                // Draw connecting line on canvas
+                lineCtx.beginPath(); lineCtx.moveTo(data.x, data.y); lineCtx.lineTo(mx, my);
                 lineCtx.lineWidth = 2;
-                lineCtx.strokeStyle = '#111';
+                lineCtx.strokeStyle = (i < boughtMinis) ? '#4caf50' : ((i === boughtMinis && reqMet && !isUnlocked) ? '#ffd700' : '#333');
                 lineCtx.stroke();
+                
+                // Create clickable DOM element
+                let miniDiv = document.createElement('div');
+                let mClasses = ['skill-node', 'mini-node'];
+                if (i < boughtMinis) mClasses.push('unlocked');
+                else if (i === boughtMinis && reqMet && !isUnlocked) mClasses.push('available');
+                else mClasses.push('locked');
+                
+                miniDiv.className = mClasses.join(' ');
+                miniDiv.style.left = mx + 'px'; miniDiv.style.top = my + 'px';
+                
+                miniDiv.onclick = (e) => { e.stopPropagation(); openNodeModal(id); vibe(10); };
+                container.appendChild(miniDiv);
             }
         }
 
@@ -415,7 +413,7 @@ document.getElementById('nm-buy-mini').addEventListener('click', () => {
         saveData.wrenches -= miniCost;
         saveData.miniNodes[selectedNodeId] = boughtMinis + 1;
         saveGame(); calculateStats(); renderSkillTree();
-        openNodeModal(selectedNodeId); // Refresh modal visually
+        openNodeModal(selectedNodeId); 
         vibe(15); sfx.cash();
     }
 });
@@ -431,12 +429,16 @@ document.getElementById('nm-buy').addEventListener('click', () => {
 });
 
 let mapViewport = document.getElementById('map-viewport'); let mapContent = document.getElementById('map-content');
-let isDragging = false, startX, startY; let mapX = 0, mapY = 0, mapZoom = 0.8; let initialDistance = null, initialZoom = 1;
+let isDragging = false, startX, startY; let mapX = 0, mapY = 0, mapZoom = 0.8; 
+let initialDistance = null, initialZoom = 1;
+let initialMapPinchX = 0, initialMapPinchY = 0;
 
 function updateMapTransform() { mapContent.style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapZoom})`; }
+
 function setZoom(newZoom) {
     let oldZoom = mapZoom; mapZoom = Math.max(0.3, Math.min(newZoom, 1.5));
-    let viewportCenterX = mapViewport.clientWidth / 2; let viewportCenterY = mapViewport.clientHeight / 2;
+    let rect = mapViewport.getBoundingClientRect();
+    let viewportCenterX = rect.width / 2; let viewportCenterY = rect.height / 2;
     let mapCenterX = (viewportCenterX - mapX) / oldZoom; let mapCenterY = (viewportCenterY - mapY) / oldZoom;
     mapX = viewportCenterX - (mapCenterX * mapZoom); mapY = viewportCenterY - (mapCenterY * mapZoom); updateMapTransform();
 }
@@ -447,20 +449,44 @@ document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(
 mapViewport.addEventListener('mousedown', (e) => { if(e.target.closest('.modal-ui')) return; isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY; });
 mapViewport.addEventListener('mouseleave', () => { isDragging = false; }); mapViewport.addEventListener('mouseup', () => { isDragging = false; });
 mapViewport.addEventListener('mousemove', (e) => { if (!isDragging) return; e.preventDefault(); mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform(); });
+
+// REBUILT PINCH-TO-ZOOM MATH
 mapViewport.addEventListener('touchstart', (e) => {
-    if(e.target.closest('.modal-ui')) return;
-    if (e.touches.length === 2) { isDragging = false; initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialZoom = mapZoom; } 
-    else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].pageX - mapX; startY = e.touches[0].pageY - mapY; }
+    if(e.target.closest('.modal-ui') || e.target.closest('.skill-node')) return;
+    if (e.touches.length === 2) { 
+        isDragging = false; 
+        initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); 
+        initialZoom = mapZoom; 
+        
+        let rect = mapViewport.getBoundingClientRect();
+        let pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+        let pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+        
+        initialMapPinchX = (pinchCenterX - mapX) / mapZoom;
+        initialMapPinchY = (pinchCenterY - mapY) / mapZoom;
+    } else if (e.touches.length === 1) { 
+        isDragging = true; startX = e.touches[0].pageX - mapX; startY = e.touches[0].pageY - mapY; 
+    }
 });
-mapViewport.addEventListener('touchend', () => { isDragging = false; });
+
+mapViewport.addEventListener('touchend', () => { isDragging = false; initialDistance = null; });
 mapViewport.addEventListener('touchmove', (e) => {
-    if(e.target.closest('.modal-ui')) return; e.preventDefault(); 
+    if(e.target.closest('.modal-ui') || e.target.closest('.skill-node')) return; e.preventDefault(); 
     if (e.touches.length === 2 && initialDistance) {
         let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-        let ratio = currentDist / initialDistance; mapZoom = Math.max(0.3, Math.min(initialZoom * ratio, 1.5));
-        let mapCenterX = (mapViewport.clientWidth / 2 - mapX) / mapZoom; let mapCenterY = (mapViewport.clientHeight / 2 - mapY) / mapZoom;
-        mapX = mapViewport.clientWidth / 2 - (mapCenterX * mapZoom); mapY = mapViewport.clientHeight / 2 - (mapCenterY * mapZoom); updateMapTransform();
-    } else if (e.touches.length === 1 && isDragging) { mapX = e.touches[0].pageX - startX; mapY = e.touches[0].pageY - startY; updateMapTransform(); }
+        let ratio = currentDist / initialDistance; 
+        mapZoom = Math.max(0.3, Math.min(initialZoom * ratio, 1.5));
+        
+        let rect = mapViewport.getBoundingClientRect();
+        let currentPinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+        let currentPinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+        
+        mapX = currentPinchCenterX - (initialMapPinchX * mapZoom); 
+        mapY = currentPinchCenterY - (initialMapPinchY * mapZoom); 
+        updateMapTransform();
+    } else if (e.touches.length === 1 && isDragging) { 
+        mapX = e.touches[0].pageX - startX; mapY = e.touches[0].pageY - startY; updateMapTransform(); 
+    }
 }, { passive: false });
 
 function openSkillTree() {
@@ -512,7 +538,7 @@ let currentWindowMaxHp = 0, currentBrickDmg = 0, currentBirdDmg = 0; let isGrind
 
 // TURBO VARIABLES
 let isTurboMode = false;
-let turboTimeRemaining = 0; // tracked in frames
+let turboTimeRemaining = 0; 
 
 let felix = { col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, shieldActive: false, shieldRegenTimer: 0, lastSwingTime: 0 };
 let ralph = { x: 180, y: 100, targetX: 180, timer: 0, state: 'IDLE' };
@@ -534,7 +560,7 @@ function initLevel() {
             let damage = 0; 
             if (Math.random() < (isTurboMode ? 0.8 : 0.2 + (level * 0.02))) {
                 damage = Math.floor(currentWindowMaxHp * (Math.random() * 0.9 + 0.1));
-                if (isTurboMode) damage = Math.floor(currentWindowMaxHp * (Math.random() * 0.2 + 0.8)); // 80-100% damaged in turbo
+                if (isTurboMode) damage = Math.floor(currentWindowMaxHp * (Math.random() * 0.2 + 0.8));
             }
             if (damage > 0) brokenCount++;
             windows.push({ col: c, row: r, hp: damage, maxHp: currentWindowMaxHp, anim: 0, rotTimer: 0, rotDmg: 0 });
@@ -565,20 +591,17 @@ function updatePhysics() {
         }
     }
 
-    // Shield Regen
     if (statShieldUnlocked && !felix.shieldActive && felix.shieldRegenTimer > 0) {
         felix.shieldRegenTimer--;
         if (felix.shieldRegenTimer <= 0) { felix.shieldActive = true; sfx.win(); spawnFloatText(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + 20, "SHIELD READY", "#0ff"); }
     }
 
-    // Passive HP Regen
     if (statRegenPerSec > 0 && hp < maxHp && frameCount % 60 === 0) {
         hp = Math.min(maxHp, hp + statRegenPerSec);
         let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
         spawnFloatText(fx, fy - 30, `+${fNum(statRegenPerSec)}`, "#0f0");
     }
 
-    // Auto-Caulk Processor
     windows.forEach(w => {
         if (w.hp > 0 && w.rotTimer > 0 && frameCount % 30 === 0) {
             w.rotTimer--; let dmg = w.rotDmg;
@@ -592,9 +615,8 @@ function updatePhysics() {
 
     felix.xOffset *= 0.7; felix.yOffset *= 0.7;
 
-    // Ralph Behavior
     let speed = (1.5 + (level * 0.1)) * statRalphSpeedMult;
-    if (isTurboMode) speed *= 1.8; // Turbo boost
+    if (isTurboMode) speed *= 1.8; 
     
     if (ralph.state === 'IDLE') {
         if (Math.abs(ralph.x - ralph.targetX) < speed) {
@@ -606,7 +628,7 @@ function updatePhysics() {
         if (ralph.timer === 15) { 
             bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5, vy: -2, rot: 0 }); 
             if (isTurboMode && Math.random() < 0.4) {
-                 bricks.push({ x: ralph.x + 15, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5 + 0.5, vy: -2.5, rot: 0 }); // Extra brick in Turbo
+                 bricks.push({ x: ralph.x + 15, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5 + 0.5, vy: -2.5, rot: 0 });
             }
             sfx.throw(); cameraShake = 5; 
         }
@@ -617,7 +639,6 @@ function updatePhysics() {
             if(Math.random() < 0.3) { sfx.stomp(); cameraShake = 15; vibe(50); }
         }
     } else if (ralph.state === 'RAGE') {
-        // Punishing rage mode
         ralph.timer++;
         if (ralph.timer > 4) { 
             bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*2, vy: -1, rot: 0 });
@@ -755,7 +776,6 @@ function drawRender() {
     ctx.fillStyle = '#511'; 
     for(let y=160; y<canvas.height; y+=20) { let offset = (y/20)%2===0 ? 0 : 20; for(let x=40; x<320; x+=40) ctx.fillRect(x + offset, y, 38, 18); }
 
-    // BOSS TURBO UI ALERTS
     if (isTurboMode) {
         ctx.fillStyle = (turboTimeRemaining < 180 && frameCount % 10 < 5) ? '#f00' : '#fa0';
         ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'center';
@@ -793,7 +813,6 @@ function drawRender() {
     ctx.save(); ctx.translate(ralph.x, ralph.y);
     if(ralph.state === 'THROW') ctx.translate(0, -10);
     
-    // Ralph turns Red in Boss Mode
     let ralphColor = isTurboMode ? (turboTimeRemaining <= 0 ? '#f00' : '#f40') : '#d50';
     drawRect(-25, -20, 50, 40, ralphColor); 
     drawRect(-15, -35, 30, 25, '#fba'); drawRect(-35, -20, 15, 30, '#fba'); drawRect(20, -20, 15, 30, '#fba');
@@ -824,7 +843,6 @@ function drawRender() {
 
     ctx.restore(); 
 
-    // HUD Display
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, 65); ctx.fillStyle = '#333'; ctx.fillRect(0, 65, canvas.width, 4); 
     
     ctx.fillStyle = '#ffd700'; ctx.font = '10px "Press Start 2P", monospace'; 
