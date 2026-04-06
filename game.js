@@ -1,10 +1,8 @@
-// AUTO-EXPAND THE SKILL MAP
 document.getElementById('map-content').style.width = '3000px';
 document.getElementById('map-content').style.height = '3000px';
 document.getElementById('skill-lines').width = 3000;
 document.getElementById('skill-lines').height = 3000;
 
-// NUMBER FORMATTER (Handles K, M, B)
 function fNum(num) {
     if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
     if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
@@ -12,11 +10,9 @@ function fNum(num) {
     return Math.floor(num).toString();
 }
 
-/**
- * MASSIVE METAPROGRESSION SYSTEM (40+ NODES)
- */
 let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
 let selectedCheckpoint = 1;
+let selectedNodeId = null; // Used for the modal
 
 const SKILL_TREE = {
     'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
@@ -77,7 +73,7 @@ const SKILL_TREE = {
 
 function loadGame() {
     try {
-        let saved = localStorage.getItem('fixItFelixRPG_v2'); // New save key for scaling update
+        let saved = localStorage.getItem('fixItFelixRPG_v2'); 
         if (saved) {
             let parsed = JSON.parse(saved);
             saveData.wrenches = parsed.wrenches || 0;
@@ -119,32 +115,77 @@ function renderSkillTree() {
             lineCtx.beginPath(); lineCtx.moveTo(parent.x, parent.y); lineCtx.lineTo(data.x, data.y); lineCtx.stroke();
         }
 
+        // Determine Icon
+        let icon = '🔧'; 
+        if (id.startsWith('pow') || id.startsWith('crit')) icon = '🔨';
+        else if (id.startsWith('tnk') || id.startsWith('shld')) icon = '🛡️';
+        else if (id.startsWith('eco')) icon = '💰';
+        else if (id.startsWith('agi') || id.startsWith('dge')) icon = '⚡';
+
         let nodeDiv = document.createElement('div');
-        let classes = ['skill-node'];
-        if (data.type === 'keystone') classes.push('keystone');
+        let classes = ['skill-node', `node-${data.type}`]; // normal, notable, keystone
         if (isUnlocked) classes.push('unlocked');
         else if (reqMet) classes.push('available');
         else classes.push('locked');
         
         nodeDiv.className = classes.join(' ');
         nodeDiv.style.left = data.x + 'px'; nodeDiv.style.top = data.y + 'px';
-        
-        let html = `<div class="node-title">${data.name}</div><div class="node-desc">${data.desc}</div>`;
-        if (!isUnlocked) html += `<div class="node-cost">${fNum(data.cost)} W</div>`;
-        
-        nodeDiv.innerHTML = html;
-        
-        if (reqMet && !isUnlocked) {
-            nodeDiv.onclick = () => {
-                if (saveData.wrenches >= data.cost) {
-                    saveData.wrenches -= data.cost; saveData.unlocked.push(id);
-                    saveGame(); renderSkillTree(); vibe(30); sfx.cash();
-                } else { vibe([50, 50, 50]); }
-            };
-        }
+        nodeDiv.innerHTML = icon;
+
+        // POPUP MODAL CLICK EVENT
+        nodeDiv.onclick = () => {
+            selectedNodeId = id;
+            document.getElementById('nm-title').innerText = data.name;
+            document.getElementById('nm-desc').innerText = data.desc;
+            
+            let btnBuy = document.getElementById('nm-buy');
+            
+            if (isUnlocked) {
+                document.getElementById('nm-cost').innerText = "✓ ALREADY UNLOCKED";
+                document.getElementById('nm-cost').style.color = "#4caf50";
+                btnBuy.style.display = 'none';
+            } else {
+                document.getElementById('nm-cost').innerText = `Cost: ${fNum(data.cost)} Wrenches`;
+                document.getElementById('nm-cost').style.color = "#ffd700";
+                btnBuy.style.display = 'block';
+                
+                if (reqMet && saveData.wrenches >= data.cost) {
+                    btnBuy.disabled = false;
+                    btnBuy.innerText = 'UNLOCK';
+                } else if (!reqMet) {
+                    btnBuy.disabled = true;
+                    btnBuy.innerText = 'PATH LOCKED';
+                } else {
+                    btnBuy.disabled = true;
+                    btnBuy.innerText = 'NOT ENOUGH WRENCHES';
+                }
+            }
+            
+            document.getElementById('node-modal').style.display = 'block';
+            vibe(10);
+        };
         container.appendChild(nodeDiv);
     }
 }
+
+// Modal Button Hooks
+document.getElementById('nm-close').addEventListener('click', () => {
+    document.getElementById('node-modal').style.display = 'none';
+    vibe(10);
+});
+
+document.getElementById('nm-buy').addEventListener('click', () => {
+    if (!selectedNodeId) return;
+    let data = SKILL_TREE[selectedNodeId];
+    if (saveData.wrenches >= data.cost) {
+        saveData.wrenches -= data.cost;
+        saveData.unlocked.push(selectedNodeId);
+        saveGame();
+        document.getElementById('node-modal').style.display = 'none';
+        renderSkillTree();
+        vibe(30); sfx.cash();
+    }
+});
 
 // ZOOM & DRAG ENGINE
 let mapViewport = document.getElementById('map-viewport'); let mapContent = document.getElementById('map-content');
@@ -161,17 +202,24 @@ function setZoom(newZoom) {
 
 document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(mapZoom + 0.2));
 document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(mapZoom - 0.2));
-mapViewport.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY; });
+
+// Prevent dragging from firing if clicking modal
+mapViewport.addEventListener('mousedown', (e) => { 
+    if(e.target.closest('#node-modal')) return;
+    isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY; 
+});
 mapViewport.addEventListener('mouseleave', () => { isDragging = false; });
 mapViewport.addEventListener('mouseup', () => { isDragging = false; });
 mapViewport.addEventListener('mousemove', (e) => { if (!isDragging) return; e.preventDefault(); mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform(); });
 
 mapViewport.addEventListener('touchstart', (e) => {
+    if(e.target.closest('#node-modal')) return;
     if (e.touches.length === 2) { isDragging = false; initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialZoom = mapZoom; } 
     else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].pageX - mapX; startY = e.touches[0].pageY - mapY; }
 });
 mapViewport.addEventListener('touchend', () => { isDragging = false; });
 mapViewport.addEventListener('touchmove', (e) => {
+    if(e.target.closest('#node-modal')) return;
     e.preventDefault(); 
     if (e.touches.length === 2 && initialDistance) {
         let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
@@ -255,7 +303,6 @@ let statShieldRegenTime = 900;
 let statShieldOnRoundStart = false;
 
 function calculateStats() {
-    // TANK: Exponential HP calculation
     let hpFlat = 0;
     if (hasSkill('tnk_1')) hpFlat += 50; if (hasSkill('tnk_2')) hpFlat += 500; if (hasSkill('tnk_3')) hpFlat += 5000;
     if (hasSkill('tnk_5')) hpFlat += 100000; if (hasSkill('tnk_7')) hpFlat += 50000000;
@@ -264,7 +311,6 @@ function calculateStats() {
     maxHp = (100 + hpFlat) * hpMult;
     hp = maxHp;
     
-    // POWER: Exponential Damage calculation
     let dmgFlat = 0;
     if (hasSkill('pow_1')) dmgFlat += 50; if (hasSkill('pow_2')) dmgFlat += 250; if (hasSkill('pow_3')) dmgFlat += 2500;
     if (hasSkill('pow_5')) dmgFlat += 50000; if (hasSkill('pow_7')) dmgFlat += 10000000;
@@ -272,22 +318,15 @@ function calculateStats() {
     if (hasSkill('pow_4')) dmgMult *= 2; if (hasSkill('pow_6')) dmgMult *= 5; if (hasSkill('pow_max')) dmgMult *= 100;
     statFixDmg = (50 + dmgFlat) * dmgMult;
 
-    // AGILITY: Cooldown (Ms logic)
     statHammerCooldownMs = hasSkill('agi_max') ? 0 : hasSkill('agi_5') ? 30 : hasSkill('agi_4') ? 60 : hasSkill('agi_3') ? 100 : hasSkill('agi_2') ? 150 : hasSkill('agi_1') ? 180 : 200;
-    
-    // DODGE
-    statDodgeChance = (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.15 : 0) + (hasSkill('dge_max') ? 0.25 : 0);
-    
-    // CRIT
-    statCritChance = (hasSkill('crit_1') ? 0.10 : 0) + (hasSkill('crit_2') ? 0.20 : 0);
+    statDodgeChance = (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.25 : 0) + (hasSkill('dge_max') ? 0.50 : 0);
+    statCritChance = (hasSkill('crit_1') ? 0.10 : 0) + (hasSkill('crit_2') ? 0.30 : 0);
     statCritMult = hasSkill('crit_max') ? 5 : 2;
 
-    // SHIELD
     statShieldUnlocked = hasSkill('shld_1');
-    statShieldRegenTime = hasSkill('shld_2') ? 300 : 900; // 5s or 15s (frames)
+    statShieldRegenTime = hasSkill('shld_2') ? 300 : 900; 
     statShieldOnRoundStart = hasSkill('shld_max');
 
-    // ECONOMY
     statWrenchMult = 1.0 + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_2') ? 0.5 : 0) + (hasSkill('eco_3') ? 2.0 : 0);
     if (hasSkill('eco_4')) statWrenchMult *= 5; if (hasSkill('eco_5')) statWrenchMult *= 20; if (hasSkill('eco_6')) statWrenchMult *= 100;
     if (hasSkill('eco_7')) statWrenchMult *= 1000; if (hasSkill('eco_max')) statWrenchMult *= 10000;
@@ -295,8 +334,6 @@ function calculateStats() {
 
 function initLevel() {
     windows = []; bricks = []; particles = []; birds = [];
-    
-    // MASSIVE EXPONENTIAL SCALING: Windows get 15% more HP every level
     let windowMaxHp = Math.floor(100 * Math.pow(1.15, level - 1));
 
     let brokenCount = 0;
@@ -304,7 +341,6 @@ function initLevel() {
         for (let c = 0; c < COLS; c++) {
             let hp = 0; let rand = Math.random();
             if (rand < 0.2 + (level * 0.02)) {
-                // Randomize starting damage severity
                 hp = Math.floor(windowMaxHp * (Math.random() * 0.9 + 0.1));
             }
             if (hp > 0) brokenCount++;
@@ -363,7 +399,6 @@ function updatePhysics() {
 
     let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
 
-    // ENEMY DAMAGE SCALING: Exponential
     let brickDmg = Math.floor(35 * Math.pow(1.15, level - 1));
     let birdDmg = Math.floor(20 * Math.pow(1.15, level - 1));
 
@@ -396,7 +431,6 @@ function takeDamage(actualDmg, fx, fy) {
     if (hp <= 0) {
         gameState = 'OVER'; stopMusic();
         
-        // ECONOMY: Wrench calculation based on score and multiplier
         wrenchesEarnedThisRun = Math.floor((score / 100) * statWrenchMult);
         if (wrenchesEarnedThisRun > 0) { saveData.wrenches += wrenchesEarnedThisRun; saveGame(); setTimeout(() => sfx.cash(), 500); }
         setTimeout(() => { if (gameState === 'OVER') openSkillTree(); }, 3000);
@@ -415,11 +449,10 @@ function handleInput(dx, dy) {
 function handleFix() {
     if (gameState !== 'PLAY') return;
     
-    // TRUE REAL-TIME COOLDOWN
     let now = Date.now();
     if (now - felix.lastSwingTime < statHammerCooldownMs) return;
     felix.lastSwingTime = now;
-    felix.actionTimer = 8; // Visual anim length
+    felix.actionTimer = 8; 
     
     let w = windows.find(w => w.col === felix.col && w.row === felix.row);
     let wx = PAD_X + w.col * CELL_W + CELL_W/2; let wy = PAD_Y + w.row * CELL_H + CELL_H/2;
@@ -432,7 +465,7 @@ function handleFix() {
         if (w.hp < 0) w.hp = 0; 
         w.anim = 10;
         
-        score += dmg; // Score directly tied to damage dealt
+        score += dmg; 
         spawnParticles(wx, wy, '#fff', 10); vibe(20);
         
         if (w.hp === 0) {
@@ -473,7 +506,6 @@ function drawRender() {
         
         drawRect(x + animShake, y, 50, 60, '#222'); drawRect(x+5 + animShake, y+5, 40, 50, '#111'); 
         
-        // Window Health Bar Visual
         drawRect(x-5, y+60, 60, 8, '#333');
         let fillRatio = w.maxHp === 0 ? 1 : 1 - (w.hp / w.maxHp);
         drawRect(x-5, y+60, 60 * fillRatio, 8, '#0f0');
@@ -544,7 +576,6 @@ function drawRender() {
     let hpRatio = Math.max(0, hp / maxHp);
     drawRect(120, 30, 100 * hpRatio, 12, hpRatio > 0.3 ? '#0f0' : '#f00'); 
     
-    // Draw Text over HP bar so player knows exact health
     ctx.fillStyle = '#fff'; ctx.font = '8px "Press Start 2P", monospace';
     ctx.fillText(`${fNum(hp)}/${fNum(maxHp)}`, 125, 40);
 
