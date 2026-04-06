@@ -174,6 +174,9 @@ function loadGame() {
         saveData.unlocked.forEach(id => { if (id !== 'node_base') saveData.miniNodes[id] = 6; });
     } catch (e) { console.warn("Save load failed", e); }
     if (!saveData.miniNodes) saveData.miniNodes = {};
+    
+    // Auto-update to highest unlocked checkpoint when loading
+    selectedCheckpoint = getMaxCheckpoint();
     updateCheckpointUI();
 }
 
@@ -570,6 +573,7 @@ function initLevel() {
 
 function handleDeath() {
     gameState = 'OVER'; stopMusic();
+    document.getElementById('pause-btn').style.display = 'none';
     saveData.wrenches += Math.floor(wrenchesEarnedThisRun); saveGame(); 
     if (wrenchesEarnedThisRun >= 1) setTimeout(() => sfx.cash(), 500);
     setTimeout(() => { if (gameState === 'OVER') openSkillTree(); }, 3000);
@@ -810,7 +814,8 @@ function handleFix() {
 function checkWin() {
     if (windows.every(w => w.hp === 0)) {
         gameState = 'WIN'; sfx.win(); stopMusic();
-        
+        document.getElementById('pause-btn').style.display = 'none';
+
         let baseClear = (10 * level) + statClearBonusFlat;
         let clearReward = baseClear * statClearBonusMult * statWrenchMult * (isGrinding ? statGrindYield : 1.0);
         let interestReward = saveData.wrenches * statInterestRate;
@@ -819,8 +824,16 @@ function checkWin() {
         setTimeout(() => { spawnFloatText(canvas.width/2, canvas.height/2 - 20, `CLEAR: +${fNum(clearReward)}`, "#ff0"); sfx.cash(); }, 500);
         if(interestReward > 0) setTimeout(() => { spawnFloatText(canvas.width/2, canvas.height/2 + 20, `INTEREST: +${fNum(interestReward)}`, "#0f0"); sfx.cash(); }, 1200);
 
-        level++; if (level > saveData.maxLevel) { saveData.maxLevel = level; saveGame(); }
-        setTimeout(() => { initLevel(); gameState = 'PLAY'; startMusic(); }, 3500);
+        level++; 
+        if (level > saveData.maxLevel) { 
+            saveData.maxLevel = level; 
+            saveGame(); 
+            // Automatically push start node up when crossing checkpoint bounds
+            selectedCheckpoint = getMaxCheckpoint(); 
+            updateCheckpointUI();
+        }
+
+        setTimeout(() => { initLevel(); gameState = 'PLAY'; document.getElementById('pause-btn').style.display = 'flex'; startMusic(); }, 3500);
     }
 }
 
@@ -970,11 +983,37 @@ bindBtn('btn-up', () => handleInput(0, -1)); bindBtn('btn-down', () => handleInp
 bindBtn('btn-left', () => handleInput(-1, 0)); bindBtn('btn-right', () => handleInput(1, 0));
 bindBtn('btn-fix', () => { if(gameState === 'PLAY') handleFix(); });
 
+// PAUSE CONTROLS
+function togglePause() {
+    if (gameState === 'PLAY') {
+        gameState = 'PAUSED';
+        document.getElementById('pause-overlay').style.display = 'flex';
+        document.getElementById('pause-btn').style.display = 'none';
+        stopMusic();
+    } else if (gameState === 'PAUSED') {
+        gameState = 'PLAY';
+        document.getElementById('pause-overlay').style.display = 'none';
+        document.getElementById('pause-btn').style.display = 'flex';
+        startMusic();
+    }
+}
+
+document.getElementById('pause-btn').addEventListener('click', togglePause);
+document.getElementById('btn-continue').addEventListener('click', togglePause);
+
+document.getElementById('btn-surrender').addEventListener('click', () => {
+    if (gameState === 'PAUSED') {
+        document.getElementById('pause-overlay').style.display = 'none';
+        handleDeath();
+    }
+});
+
 function launchGame() {
     initAudio(); 
     document.getElementById('start-overlay').style.display = 'none'; document.getElementById('skill-tree-overlay').style.display = 'none';
     level = selectedCheckpoint; wrenchesEarnedThisRun = 0; calculateStats(); 
     felix.shieldActive = statShieldUnlocked; felix.shieldRegenTimer = 0; felix.lastSwingTime = 0;
+    document.getElementById('pause-btn').style.display = 'flex';
     initLevel(); gameState = 'PLAY'; startMusic();
 }
 
@@ -987,6 +1026,7 @@ document.getElementById('fullscreen-btn').addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && (gameState === 'PLAY' || gameState === 'PAUSED')) togglePause();
     if (['ArrowUp','w','W'].includes(e.key)) handleInput(0, -1);
     if (['ArrowDown','s','S'].includes(e.key)) handleInput(0, 1);
     if (['ArrowLeft','a','A'].includes(e.key)) handleInput(-1, 0);
