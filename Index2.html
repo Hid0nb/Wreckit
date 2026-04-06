@@ -1,123 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css?v=15">
-</head>
-<body>
-
 <div id="arcade-cabinet">
     <div id="fullscreen-btn" title="Toggle Fullscreen">⛶</div>
+    
+    <div id="pause-btn" title="Pause Game">⏸️</div>
+
     <div id="screen-bezel">
         <div id="game-container" class="crt">
             <canvas id="gameCanvas" width="360" height="600"></canvas>
             
-            <div id="pause-btn" title="Pause Game">⏸️</div>
+            ```
 
-            <div id="start-overlay" class="overlay">
-                <h2 style="color:#4cf; text-shadow: 2px 2px #00f;">FIX-IT<br>FELIX JR.</h2>
-                <p style="font-size: 10px; line-height: 1.5; color: #aaa; margin: 10px;">
-                    Dodge Ralph's bricks!<br>Deeper levels require<br>more hits per window.
-                </p>
-                <button id="btn-insert-coin" class="menu-btn blinking">INSERT COIN</button>
-                <button id="btn-skills" class="menu-btn">SKILL MAP</button>
-            </div>
+### 2. Update `style.css`
+Replace your old `#pause-btn` block, and replace your **entire** D-Pad CSS section (around the bottom of the file) with this updated code. 
 
-            <div id="pause-overlay" class="overlay" style="display:none;">
-                <h2 style="color:#ff0; text-shadow: 2px 2px #000; margin-bottom: 30px;">PAUSED</h2>
-                <button id="btn-continue" class="menu-btn" style="background:#4caf50; color:white; width: 200px;">CONTINUE</button>
-                <button id="btn-surrender" class="menu-btn" style="background:#d32f2f; color:white; width: 200px;">SURRENDER</button>
-                <p style="font-size: 8px; color: #aaa; margin-top: 15px; width: 200px; line-height: 1.5;">Surrendering will end the run early, but you keep all earned Wrenches.</p>
-            </div>
+This styles the Pause button to perfectly match the Fullscreen button, and drastically increases the size (75x75 pixels) and spacing of the D-Pad:
 
-            <div id="skill-tree-overlay" class="overlay" style="display:none;">
-                <div id="skill-tree-header">
-                    <div class="wrench-count">WRENCHES: <span id="ui-wrenches">0</span></div>
-                </div>
-                
-                <div id="zoom-controls">
-                    <button id="btn-zoom-in" class="zoom-btn">+</button>
-                    <button id="btn-zoom-out" class="zoom-btn">-</button>
-                </div>
+```css
+/* --- NEW PAUSE BUTTON STYLE --- */
+#pause-btn {
+    position: absolute; top: 10px; right: 60px; width: 40px; height: 40px;
+    background: #222; border: 2px solid #555; border-radius: 8px; color: #aaa;
+    display: none; justify-content: center; align-items: center;
+    font-size: 20px; font-family: sans-serif; cursor: pointer; z-index: 20; box-shadow: 0 4px 0 #000;
+}
+#pause-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; background: #333; }
 
-                <div id="map-viewport">
-                    <div id="map-content">
-                        <canvas id="skill-lines" width="3000" height="3000"></canvas>
-                        <div id="nodes-container"></div>
-                    </div>
-                </div>
-                
-                <div id="st-bottom-bar">
-                    <button id="btn-show-stats" class="header-btn">STATS</button>
-                    <div id="checkpoint-selector">
-                        <button id="btn-prev-cp" class="cp-btn">◀</button>
-                        <span id="cp-text">START LVL: 1</span>
-                        <button id="btn-next-cp" class="cp-btn">▶</button>
-                    </div>
-                    <button id="btn-restart-run">PLAY</button>
-                </div>
 
-                <div id="node-modal" class="modal-ui" style="display:none;">
-                    <h3 id="nm-title">Title</h3>
-                    <p id="nm-desc">Description goes here...</p>
-                    
-                    <div id="nm-mini-section">
-                        <div style="font-size:10px; color:#aaa; margin-bottom:5px;">SATELLITE NODES (<span id="nm-mini-count">0/6</span>)</div>
-                        <div id="nm-mini-bonus" style="font-size:8px; color:#4cf; margin-bottom:8px;">+5 HP per node</div>
-                        <button id="nm-buy-mini" class="nm-btn" style="width:100%; margin-bottom:15px; background:#0070dd;">BUY MINI (100 W)</button>
-                    </div>
-
-                    <p id="nm-cost">Main Cost</p>
-                    <div class="nm-buttons">
-                        <button id="nm-buy" class="nm-btn">UNLOCK MAIN</button>
-                        <button id="nm-close" class="nm-btn nm-close-btn">CLOSE</button>
-                    </div>
-                </div>
-
-                <div id="stats-modal" class="modal-ui" style="display:none;">
-                    <h3>PLAYER STATS</h3>
-                    <div class="stat-grid">
-                        <div class="stat-row"><span>MAX HP:</span> <span id="s-hp" class="stat-val"></span></div>
-                        <div class="stat-row"><span>REGEN/sec:</span> <span id="s-reg" class="stat-val"></span></div>
-                        <div class="stat-row"><span>LIFESTEAL:</span> <span id="s-ls" class="stat-val"></span></div>
-                        <div class="stat-row"><span>HAMMER DMG:</span> <span id="s-dmg" class="stat-val"></span></div>
-                        <div class="stat-row"><span>AUTO-CAULK:</span> <span id="s-rot" class="stat-val"></span></div>
-                        <div class="stat-row"><span>CRIT MULT:</span> <span id="s-crit" class="stat-val"></span></div>
-                        <div class="stat-row"><span>MULTI-STRIKE:</span> <span id="s-ms" class="stat-val"></span></div>
-                        <div class="stat-row"><span>DODGE:</span> <span id="s-dodge" class="stat-val"></span></div>
-                        <div class="stat-row"><span>RALPH NERF:</span> <span id="s-nerf" class="stat-val"></span></div>
-                        <div class="stat-row"><span>TURBO TIMER:</span> <span id="s-trb" class="stat-val"></span></div>
-                        <hr style="border-color:#444; width:100%;">
-                        <div class="stat-row"><span>WRENCH MULT:</span> <span id="s-wm" class="stat-val"></span></div>
-                        <div class="stat-row"><span>CLEAR BNS:</span> <span id="s-cb" class="stat-val"></span></div>
-                        <div class="stat-row"><span>GRIND YIELD:</span> <span id="s-gy" class="stat-val"></span></div>
-                        <div class="stat-row"><span>INTEREST:</span> <span id="s-int" class="stat-val"></span></div>
-                    </div>
-                    <button id="btn-close-stats" class="nm-btn nm-close-btn" style="margin-top:10px; width:100%;">CLOSE</button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <div id="control-deck">
-        <div class="control-row">
-            <div class="d-pad">
-                <div class="d-btn" id="btn-up">▲</div>
-                <div class="d-btn" id="btn-left">◀</div>
-                <div id="btn-center"></div>
-                <div class="d-btn" id="btn-right">▶</div>
-                <div class="d-btn" id="btn-down">▼</div>
-            </div>
-            <div class="action-group">
-                <div class="action-btn" id="btn-fix">FIX</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="game.js?v=15"></script>
-</body>
-</html>
+/* --- MASSIVE D-PAD IMPROVEMENTS --- */
+.d-pad { 
+    display: grid; 
+    grid-template-columns: 75px 75px 75px; 
+    grid-template-rows: 75px 75px 75px; 
+    gap: 4px; 
+}
+.d-btn { 
+    background: #333; border: 4px solid #111; border-radius: 12px; 
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.1), 0 6px 0 #000; 
+    display: flex; justify-content: center; align-items: center; 
+    font-size: 32px; color: rgba(255,255,255,0.5); font-family: sans-serif; cursor: pointer;
+}
+.d-btn:active { background: #444; transform: translateY(6px); box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 0 0 #000; }
+#btn-up { grid-column: 2; grid-row: 1; border-bottom: none; border-radius: 12px 12px 0 0;}
+#btn-left { grid-column: 1; grid-row: 2; border-right: none; border-radius: 12px 0 0 12px;}
+#btn-center { grid-column: 2; grid-row: 2; background: #222; border: none; box-shadow: none; }
+#btn-right { grid-column: 3; grid-row: 2; border-left: none; border-radius: 0 12px 12px 0;}
+#btn-down { grid-column: 2; grid-row: 3; border-top: none; border-radius: 0 0 12px 12px;}
