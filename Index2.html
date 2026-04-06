@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
@@ -53,9 +53,16 @@
                 <div id="node-modal" class="modal-ui" style="display:none;">
                     <h3 id="nm-title">Title</h3>
                     <p id="nm-desc">Description goes here...</p>
-                    <p id="nm-cost">Cost</p>
+                    
+                    <div id="nm-mini-section">
+                        <div style="font-size:10px; color:#aaa; margin-bottom:5px;">SATELLITE NODES (<span id="nm-mini-count">0/6</span>)</div>
+                        <div id="nm-mini-bonus" style="font-size:8px; color:#4cf; margin-bottom:8px;">+5 HP per node</div>
+                        <button id="nm-buy-mini" class="nm-btn" style="width:100%; margin-bottom:15px; background:#0070dd;">BUY MINI (100 W)</button>
+                    </div>
+
+                    <p id="nm-cost">Main Cost</p>
                     <div class="nm-buttons">
-                        <button id="nm-buy" class="nm-btn">UNLOCK</button>
+                        <button id="nm-buy" class="nm-btn">UNLOCK MAIN</button>
                         <button id="nm-close" class="nm-btn nm-close-btn">CLOSE</button>
                     </div>
                 </div>
@@ -102,6 +109,6 @@
     </div>
 </div>
 
-<script src="game.js?v=10"></script>
+<script src="game.js?v=12"></script>
 </body>
 </html>
