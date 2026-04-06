@@ -7,12 +7,18 @@ let selectedCheckpoint = 1;
 // Map Coordinates (Center is 500,500)
 const SKILL_TREE = {
     'node_base': { x: 500, y: 500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
+    
+    // AGILITY
     'agi_1': { x: 350, y: 350, name: 'Quick Hands', cost: 5, req: 'node_base', desc: 'Fix windows 50% faster.', type: 'normal' },
     'agi_2': { x: 250, y: 250, name: 'Nimble', cost: 15, req: 'agi_1', desc: 'Increases Invincibility frames.', type: 'normal' },
     'agi_3': { x: 150, y: 150, name: 'Master Builder', cost: 40, req: 'agi_2', desc: '25% chance to fix a fully broken window in 1 hit.', type: 'keystone' },
-    'tnk_1': { x: 650, y: 350, name: 'Hard Hat', cost: 5, req: 'node_base', desc: '+1 Max Life.', type: 'normal' },
-    'tnk_2': { x: 750, y: 250, name: 'Kevlar Vest', cost: 20, req: 'tnk_1', desc: 'Ignore the first brick hit of every level.', type: 'normal' },
-    'tnk_3': { x: 850, y: 150, name: 'OSHA Boss', cost: 50, req: 'tnk_2', desc: 'Start with 5 Max Lives.', type: 'keystone' },
+    
+    // TANK (Updated for HP System)
+    'tnk_1': { x: 650, y: 350, name: 'Hard Hat', cost: 5, req: 'node_base', desc: '+50 Max HP.', type: 'normal' },
+    'tnk_2': { x: 750, y: 250, name: 'Kevlar Vest', cost: 20, req: 'tnk_1', desc: 'Energy shield absorbs the first hit of every level.', type: 'normal' },
+    'tnk_3': { x: 850, y: 150, name: 'OSHA Boss', cost: 50, req: 'tnk_2', desc: '+100 Max HP.', type: 'keystone' },
+    
+    // ECONOMY
     'eco_1': { x: 500, y: 650, name: 'Union Dues', cost: 5, req: 'node_base', desc: 'Base score increased by 20%.', type: 'normal' },
     'eco_2': { x: 500, y: 800, name: 'Golden Hammer', cost: 20, req: 'eco_1', desc: 'Earn 1 Wrench per 50 pts instead of 100.', type: 'normal' },
     'eco_3': { x: 500, y: 950, name: 'Overtime', cost: 60, req: 'eco_2', desc: 'Score is Doubled. Ralph throws 50% faster.', type: 'keystone' }
@@ -193,7 +199,8 @@ const COLS = 3; const ROWS = 5;
 const PAD_X = 60; const PAD_Y = 180; 
 const CELL_W = 80; const CELL_H = 80;
 
-let score = 0, lives = 3, level = 1, startLives = 3;
+let score = 0, level = 1;
+let hp = 100, maxHp = 100;
 let gameState = 'START';
 let frameCount = 0, cameraShake = 0, wrenchesEarnedThisRun = 0;
 
@@ -207,8 +214,10 @@ let statWrenchRate = 100;
 let statRalphSpeed = 1.0;
 
 function calculateStats() {
-    startLives = 3 + (hasSkill('tnk_1') ? 1 : 0) + (hasSkill('tnk_3') ? 1 : 0);
-    lives = startLives;
+    // Base 100 HP, +50 for Hard Hat, +100 for OSHA Boss
+    maxHp = 100 + (hasSkill('tnk_1') ? 50 : 0) + (hasSkill('tnk_3') ? 100 : 0);
+    hp = maxHp;
+    
     statScoreMult = 1.0 + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_3') ? 1.0 : 0);
     statWrenchRate = hasSkill('eco_2') ? 50 : 100;
     statRalphSpeed = hasSkill('eco_3') ? 1.5 : 1.0;
@@ -228,14 +237,19 @@ function initLevel() {
             let state = 0; let rand = Math.random();
             
             if (rand < 0.2 + (level * 0.02)) {
-                // Determine severity based on difficulty curve
                 state = Math.floor(Math.random() * maxWindowState) + 1;
             }
             if (state > 0) brokenCount++;
-            windows.push({ col: c, row: r, state: state, anim: 0 });
+            
+            // Track maxState per window to calculate the health bar fill
+            windows.push({ col: c, row: r, state: state, maxState: state, anim: 0 });
         }
     }
-    if (brokenCount === 0) windows[0].state = maxWindowState;
+    // Ensure at least one window is broken
+    if (brokenCount === 0) {
+        windows[0].state = maxWindowState;
+        windows[0].maxState = maxWindowState;
+    }
     
     felix.col = 1; felix.row = 4; felix.invincibleTimer = 0;
     felix.shieldActive = hasSkill('tnk_2'); 
@@ -273,7 +287,6 @@ function updatePhysics() {
         }
     }
 
-    // Birds only spawn Level 4 and higher
     if (level >= 4 && Math.random() < 0.01 + (level * 0.001)) {
         birds.push({ x: -20, y: PAD_Y + Math.floor(Math.random() * ROWS) * CELL_H + CELL_H/2, vx: 3 + level*0.2 });
     }
@@ -283,12 +296,17 @@ function updatePhysics() {
 
     for (let i = bricks.length - 1; i >= 0; i--) {
         let b = bricks[i]; b.vy += 0.4; b.x += b.vx; b.y += b.vy; b.rot += 0.2;
-        if (felix.invincibleTimer === 0 && Math.hypot(b.x - fx, b.y - fy) < 25) { bricks.splice(i, 1); takeDamage(); continue; }
+        if (felix.invincibleTimer === 0 && Math.hypot(b.x - fx, b.y - fy) < 25) { 
+            bricks.splice(i, 1); takeDamage(35); // Bricks do 35 damage
+            continue; 
+        }
         if (b.y > canvas.height + 50) bricks.splice(i, 1); 
     }
 
     for (let i = birds.length - 1; i >= 0; i--) {
-        if (felix.invincibleTimer === 0 && Math.hypot(birds[i].x - fx, birds[i].y - fy) < 20) { birds.splice(i, 1); takeDamage(); }
+        if (felix.invincibleTimer === 0 && Math.hypot(birds[i].x - fx, birds[i].y - fy) < 20) { 
+            birds.splice(i, 1); takeDamage(20); // Birds do 20 damage
+        }
     }
 
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -297,20 +315,22 @@ function updatePhysics() {
     }
 }
 
-function takeDamage() {
+function takeDamage(dmgAmount) {
     if (felix.shieldActive) {
         felix.shieldActive = false; felix.invincibleTimer = 60;
-        spawnParticles(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + CELL_H/2, '#0f0', 30);
+        spawnParticles(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + CELL_H/2, '#0ff', 30);
         sfx.jump(); vibe(20); return;
     }
 
-    lives--;
+    hp -= dmgAmount;
+    if (hp < 0) hp = 0;
+
     felix.invincibleTimer = hasSkill('agi_2') ? 150 : 90; 
     
     sfx.hurt(); vibe([100, 50, 100]); cameraShake = 20;
     spawnParticles(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + CELL_H/2, '#00f', 20);
     
-    if (lives <= 0) {
+    if (hp <= 0) {
         gameState = 'OVER'; stopMusic();
         
         wrenchesEarnedThisRun = Math.floor(score / statWrenchRate);
@@ -383,17 +403,26 @@ function drawRender() {
         let x = PAD_X + w.col * CELL_W; let y = PAD_Y + w.row * CELL_H;
         let animShake = w.anim > 0 ? (Math.random()-0.5)*4 : 0; if(w.anim > 0) w.anim--;
         
-        drawRect(x + animShake, y, 50, 60, '#222'); drawRect(x+5 + animShake, y+5, 40, 50, '#111'); drawRect(x-5, y+60, 60, 8, '#aaa');
+        drawRect(x + animShake, y, 50, 60, '#222'); drawRect(x+5 + animShake, y+5, 40, 50, '#111'); 
         
+        // Window Sill (Health Bar background)
+        drawRect(x-5, y+60, 60, 8, '#333');
+        
+        // Green Health Fill
+        let fillRatio = w.maxState === 0 ? 1 : 1 - (w.state / w.maxState);
+        drawRect(x-5, y+60, 60 * fillRatio, 8, '#0f0');
+        // Glossy shine over the health bar
+        drawRect(x-5, y+60, 60, 2, 'rgba(255,255,255,0.3)');
+
         if (w.state === 0) { 
             drawRect(x+5, y+5, 40, 50, '#4af'); drawRect(x+10, y+10, 10, 30, '#8df'); 
-        } else if (w.state === 1) { // Cracked
+        } else if (w.state === 1) { 
             drawRect(x+5, y+5, 40, 50, '#4af');
             ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+25, y+5); ctx.lineTo(x+15, y+25); ctx.lineTo(x+5, y+25); ctx.stroke();
-        } else if (w.state === 2) { // Half Broken
+        } else if (w.state === 2) { 
             drawRect(x+5, y+5, 40, 50, '#4af'); drawRect(x+5, y+5, 20, 20, '#000');
             ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+25, y+5); ctx.lineTo(x+15, y+25); ctx.lineTo(x+5, y+25); ctx.stroke();
-        } else { // Fully Broken (State 3+)
+        } else { 
             drawRect(x+5, y+5, 10, 15, '#4af'); drawRect(x+35, y+40, 10, 15, '#4af'); 
         }
     });
@@ -408,15 +437,31 @@ function drawRender() {
 
     if (felix.invincibleTimer === 0 || Math.floor(frameCount / 4) % 2 === 0) {
         let fx = PAD_X + felix.col * CELL_W + 25 + felix.xOffset; let fy = PAD_Y + felix.row * CELL_H + 30 + felix.yOffset;
+        
+        // Forcefield Visual (Behind Felix)
+        if (felix.shieldActive) { 
+            ctx.beginPath();
+            ctx.arc(fx, fy - 5, 28, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.2)';
+            ctx.fill();
+        }
+
         drawRect(fx-10, fy, 20, 25, '#05f'); drawRect(fx-8, fy-15, 16, 15, '#fca');
         drawRect(fx-10, fy-20, 20, 8, '#05f'); drawRect(fx-5, fy+25, 10, 10, '#531');
         
-        if (felix.shieldActive) { ctx.strokeStyle = '#0f0'; ctx.lineWidth = 2; ctx.strokeRect(fx-15, fy-25, 30, 65); }
-
         if (felix.actionTimer > 0) {
             ctx.save(); ctx.translate(fx+15, fy-10); ctx.rotate(Math.PI/4);
             drawRect(-2, -15, 4, 20, '#852'); drawRect(-8, -20, 16, 8, '#fd0'); ctx.restore();
         } else { drawRect(fx+10, fy+10, 4, 15, '#852'); drawRect(fx+6, fy+22, 12, 6, '#fd0'); }
+
+        // Forcefield Outline (In front of Felix)
+        if (felix.shieldActive) { 
+            ctx.beginPath();
+            ctx.arc(fx, fy - 5, 28, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.stroke();
+        }
     }
 
     birds.forEach(b => { drawRect(b.x, b.y, 15, 10, '#fff'); drawRect(b.x + (frameCount%10 < 5 ? 5 : 0), b.y-5, 10, 5, '#ddd'); });
@@ -425,17 +470,18 @@ function drawRender() {
 
     ctx.restore(); 
 
-    // HUD
+    // HUD (Updated for HP Bar)
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, 50); ctx.fillStyle = '#333'; ctx.fillRect(0, 50, canvas.width, 4); 
     
     ctx.fillStyle = '#0f0'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillText(`SCORE:${score.toString().padStart(6,'0')}`, 10, 20);
     ctx.fillStyle = '#fff'; ctx.fillText(`LVL:${level}`, 10, 40);
 
-    for(let i=0; i<startLives; i++) {
-        let x = 85 + (i*20); 
-        if (i < lives) { drawRect(x, 30, 12, 12, '#f00'); drawRect(x+2, 32, 4, 4, '#ff8'); } 
-        else { drawRect(x, 30, 12, 12, '#222'); drawRect(x+2, 32, 8, 8, '#111'); }
-    }
+    // Dynamic HP Bar Rendering
+    ctx.fillStyle = '#fff'; ctx.fillText(`HP:`, 85, 40);
+    drawRect(120, 30, 100, 12, '#400'); // HP Backing
+    let hpRatio = Math.max(0, hp / maxHp);
+    drawRect(120, 30, 100 * hpRatio, 12, hpRatio > 0.3 ? '#0f0' : '#f00'); // Dynamic fill
+    drawRect(120, 30, 100, 2, 'rgba(255,255,255,0.2)'); // Gloss
 
     if (gameState === 'OVER') {
         ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0,0,canvas.width,canvas.height);
