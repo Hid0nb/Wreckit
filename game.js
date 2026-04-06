@@ -1,30 +1,35 @@
+// AUTO-EXPAND THE SKILL MAP FOR THE MASSIVE TREE
+document.getElementById('map-content').style.width = '3000px';
+document.getElementById('map-content').style.height = '3000px';
+document.getElementById('skill-lines').width = 3000;
+document.getElementById('skill-lines').height = 3000;
+
 /**
  * MASSIVE METAPROGRESSION SYSTEM
  */
 let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
 let selectedCheckpoint = 1;
 
-// Massively Expanded 3000x3000 Map Coordinates (Center is 1500,1500)
-// This completely fixes the overlapping nodes seen in earlier builds.
+// 3000x3000 Map Coordinates (Center is 1500,1500)
 const SKILL_TREE = {
     'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
     
     // --- AGILITY BRANCH (Top Left Diagonal) ---
-    'agi_1': { x: 1250, y: 1250, name: 'Light Hammer', cost: 5, req: 'node_base', desc: 'Fix windows 10% faster.', type: 'normal' },
-    'agi_2': { x: 1000, y: 1000, name: 'Quick Step', cost: 15, req: 'agi_1', desc: 'Fix windows 20% faster.', type: 'normal' },
-    'agi_hand': { x: 750, y: 750, name: 'Coffee Break', cost: 40, req: 'agi_2', desc: 'Fix windows 40% faster.', type: 'notable' },
+    'agi_1': { x: 1250, y: 1250, name: 'Lighter Hammer', cost: 5, req: 'node_base', desc: 'Swing cooldown reduced to 150ms.', type: 'normal' },
+    'agi_2': { x: 1000, y: 1000, name: 'Quick Swing', cost: 15, req: 'agi_1', desc: 'Swing cooldown reduced to 100ms.', type: 'normal' },
+    'agi_hand': { x: 750, y: 750, name: 'Blurry Hands', cost: 40, req: 'agi_2', desc: 'Swing cooldown reduced to 50ms.', type: 'notable' },
     
     // Agility Fork A (Dodge - UP)
     'agi_ev1': { x: 750, y: 450, name: 'Lucky Shoes', cost: 30, req: 'agi_hand', desc: '5% chance to dodge any falling object.', type: 'normal' },
     'agi_gst': { x: 750, y: 150, name: 'Ghost Step', cost: 80, req: 'agi_ev1', desc: '15% chance to dodge any falling object.', type: 'notable' },
     
-    // Agility Fork B (Crit Fix - LEFT)
-    'agi_ch1': { x: 450, y: 750, name: 'Good Swing', cost: 30, req: 'agi_hand', desc: '5% chance to fix a fully broken window in 1 hit.', type: 'normal' },
-    'agi_mst': { x: 150, y: 750, name: 'Master Builder', cost: 80, req: 'agi_ch1', desc: '15% chance to fix a fully broken window in 1 hit.', type: 'notable' },
+    // Agility Fork B (Fix Power - LEFT)
+    'agi_pow1': { x: 450, y: 750, name: 'Heavy Mallet', cost: 30, req: 'agi_hand', desc: 'Hammer heals 2 cracks per swing.', type: 'normal' },
+    'agi_pow2': { x: 150, y: 750, name: 'Golden Sledge', cost: 80, req: 'agi_pow1', desc: 'Hammer heals 3 cracks per swing.', type: 'notable' },
     
     // Agility Main Path (Continue Diagonal)
     'agi_3': { x: 500, y: 500, name: 'Adrenaline', cost: 100, req: 'agi_hand', desc: 'Increases Invincibility frames by 1 second.', type: 'normal' },
-    'agi_ninj': { x: 250, y: 250, name: 'Felix Ninja', cost: 300, req: 'agi_3', desc: '+30% Dodge Chance, +25% 1-Hit Fix Chance.', type: 'keystone' },
+    'agi_ninj': { x: 250, y: 250, name: 'Felix Ninja', cost: 300, req: 'agi_3', desc: '+30% Dodge. Swing cooldown is INSTANT.', type: 'keystone' },
 
     // --- TANK BRANCH (Top Right Diagonal) ---
     'tnk_1': { x: 1750, y: 1250, name: 'Thick Gloves', cost: 5, req: 'node_base', desc: '+10 Max HP.', type: 'normal' },
@@ -32,8 +37,9 @@ const SKILL_TREE = {
     'tnk_hat': { x: 2250, y: 750, name: 'Hard Hat', cost: 40, req: 'tnk_2', desc: '+50 Max HP.', type: 'notable' },
     
     // Tank Fork A (Shield - UP)
-    'tnk_sh1': { x: 2250, y: 450, name: 'Battery Pack', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
-    'tnk_vst': { x: 2250, y: 150, name: 'Kevlar Vest', cost: 80, req: 'tnk_sh1', desc: 'Energy shield absorbs the first hit of every level.', type: 'notable' },
+    'tnk_sh1': { x: 2250, y: 450, name: 'Energy Shield', cost: 30, req: 'tnk_hat', desc: 'Absorbs 1 hit. Recharges in 15 seconds.', type: 'normal' },
+    'tnk_vst': { x: 2250, y: 150, name: 'Fast Charger', cost: 80, req: 'tnk_sh1', desc: 'Shield recharges in 7 seconds.', type: 'notable' },
+    'tnk_sh_max': { x: 2550, y: 150, name: 'Reactive Shield', cost: 200, req: 'tnk_vst', desc: 'Shield instantly recharges at the start of a new round.', type: 'keystone' },
     
     // Tank Fork B (Regen - RIGHT)
     'tnk_rg1': { x: 2550, y: 750, name: 'First Aid', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
@@ -105,7 +111,6 @@ function renderSkillTree() {
     for (const [id, data] of Object.entries(SKILL_TREE)) {
         let isUnlocked = hasSkill(id);
         let reqMet = data.req === null || hasSkill(data.req);
-        let canAfford = saveData.wrenches >= data.cost;
         
         if (data.req) {
             let parent = SKILL_TREE[data.req];
@@ -147,30 +152,20 @@ let isDragging = false, startX, startY;
 let mapX = 0, mapY = 0, mapZoom = 0.8;
 let initialDistance = null, initialZoom = 1;
 
-function updateMapTransform() {
-    mapContent.style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapZoom})`;
-}
+function updateMapTransform() { mapContent.style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapZoom})`; }
 
 function setZoom(newZoom) {
     let oldZoom = mapZoom;
     mapZoom = Math.max(0.3, Math.min(newZoom, 1.5));
-    
-    // Keep map centered on screen while zooming with buttons
-    let viewportCenterX = mapViewport.clientWidth / 2;
-    let viewportCenterY = mapViewport.clientHeight / 2;
-    let mapCenterX = (viewportCenterX - mapX) / oldZoom;
-    let mapCenterY = (viewportCenterY - mapY) / oldZoom;
-    
-    mapX = viewportCenterX - (mapCenterX * mapZoom);
-    mapY = viewportCenterY - (mapCenterY * mapZoom);
+    let viewportCenterX = mapViewport.clientWidth / 2; let viewportCenterY = mapViewport.clientHeight / 2;
+    let mapCenterX = (viewportCenterX - mapX) / oldZoom; let mapCenterY = (viewportCenterY - mapY) / oldZoom;
+    mapX = viewportCenterX - (mapCenterX * mapZoom); mapY = viewportCenterY - (mapCenterY * mapZoom);
     updateMapTransform();
 }
 
-// UI Zoom Buttons
 document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(mapZoom + 0.2));
 document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(mapZoom - 0.2));
 
-// Mouse Drag
 mapViewport.addEventListener('mousedown', (e) => {
     isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY;
 });
@@ -181,7 +176,6 @@ mapViewport.addEventListener('mousemove', (e) => {
     mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform();
 });
 
-// Touch Drag & Pinch-to-Zoom
 mapViewport.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
         isDragging = false;
@@ -194,20 +188,14 @@ mapViewport.addEventListener('touchstart', (e) => {
 });
 mapViewport.addEventListener('touchend', () => { isDragging = false; });
 mapViewport.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Prevents browser pull-to-refresh
+    e.preventDefault(); 
     if (e.touches.length === 2 && initialDistance) {
         let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         let ratio = currentDist / initialDistance;
         let newZoom = Math.max(0.3, Math.min(initialZoom * ratio, 1.5));
-        
-        let viewportCenterX = mapViewport.clientWidth / 2;
-        let viewportCenterY = mapViewport.clientHeight / 2;
-        let mapCenterX = (viewportCenterX - mapX) / mapZoom;
-        let mapCenterY = (viewportCenterY - mapY) / mapZoom;
-        
-        mapZoom = newZoom;
-        mapX = viewportCenterX - (mapCenterX * mapZoom);
-        mapY = viewportCenterY - (mapCenterY * mapZoom);
+        let viewportCenterX = mapViewport.clientWidth / 2; let viewportCenterY = mapViewport.clientHeight / 2;
+        let mapCenterX = (viewportCenterX - mapX) / mapZoom; let mapCenterY = (viewportCenterY - mapY) / mapZoom;
+        mapZoom = newZoom; mapX = viewportCenterX - (mapCenterX * mapZoom); mapY = viewportCenterY - (mapCenterY * mapZoom);
         updateMapTransform();
     } else if (e.touches.length === 1 && isDragging) {
         mapX = e.touches[0].pageX - startX; mapY = e.touches[0].pageY - startY; updateMapTransform();
@@ -218,8 +206,6 @@ function openSkillTree() {
     renderSkillTree();
     document.getElementById('start-overlay').style.display = 'none';
     document.getElementById('skill-tree-overlay').style.display = 'block';
-    
-    // Center the map logic
     mapZoom = 0.8;
     mapX = (mapViewport.clientWidth / 2) - (1500 * mapZoom);
     mapY = (mapViewport.clientHeight / 2) - (1500 * mapZoom);
@@ -291,7 +277,10 @@ let hp = 100, maxHp = 100;
 let gameState = 'START';
 let frameCount = 0, cameraShake = 0, wrenchesEarnedThisRun = 0;
 
-let felix = { col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, shieldActive: false };
+let felix = { 
+    col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, 
+    shieldActive: false, shieldRegenTimer: 0, swingCooldown: 0 
+};
 let ralph = { x: 180, y: 100, targetX: 180, timer: 0, state: 'IDLE' };
 let windows = []; let bricks = []; let particles = []; let birds = []; let floatTexts = [];
 
@@ -302,8 +291,11 @@ let statRalphSpeed = 1.0;
 let statDmgReduction = 0;
 let statDodgeChance = 0;
 let statRegen = 0;
-let statCritFix = 0;
-let statFixTimer = 10;
+let statHammerCooldown = 12; // 200ms default
+let statFixPower = 1;        // Heals 1 crack default
+let statShieldUnlocked = false;
+let statShieldRegenTime = 900; // 15 seconds default
+let statShieldOnRoundStart = false;
 
 function calculateStats() {
     maxHp = 100 + (hasSkill('tnk_1') ? 10 : 0) + (hasSkill('tnk_2') ? 15 : 0) + (hasSkill('tnk_hat') ? 50 : 0) +
@@ -312,10 +304,22 @@ function calculateStats() {
     hp = maxHp;
     
     statDodgeChance = 0 + (hasSkill('agi_ev1') ? 0.05 : 0) + (hasSkill('agi_gst') ? 0.15 : 0) + (hasSkill('agi_ninj') ? 0.30 : 0);
-    statCritFix = 0 + (hasSkill('agi_ch1') ? 0.05 : 0) + (hasSkill('agi_mst') ? 0.15 : 0) + (hasSkill('agi_ninj') ? 0.25 : 0);
     
-    statFixTimer = 10 - (hasSkill('agi_1') ? 1 : 0) - (hasSkill('agi_2') ? 2 : 0) - (hasSkill('agi_hand') ? 4 : 0);
+    // Hammer Cooldown Scaling
+    statHammerCooldown = hasSkill('agi_ninj') ? 1 : 
+                         hasSkill('agi_hand') ? 3 : 
+                         hasSkill('agi_2') ? 6 : 
+                         hasSkill('agi_1') ? 9 : 12;
+                         
+    // Fix Power Scaling
+    statFixPower = hasSkill('agi_pow2') ? 3 :
+                   hasSkill('agi_pow1') ? 2 : 1;
     
+    // Shield Mechanics
+    statShieldUnlocked = hasSkill('tnk_sh1');
+    statShieldRegenTime = hasSkill('tnk_vst') ? 420 : 900; // 7s vs 15s
+    statShieldOnRoundStart = hasSkill('tnk_sh_max');
+
     statDmgReduction = 0 + (hasSkill('eco_ar1') ? 5 : 0) + (hasSkill('eco_pl8') ? 15 : 0) + (hasSkill('tnk_osh') ? 5 : 0);
     statRegen = hasSkill('tnk_med') ? 0.10 : 0;
     
@@ -349,7 +353,12 @@ function initLevel() {
     if (brokenCount === 0) { windows[0].state = maxWindowState; windows[0].maxState = maxWindowState; }
     
     felix.col = 1; felix.row = 4; felix.invincibleTimer = 0;
-    felix.shieldActive = hasSkill('tnk_vst'); 
+    
+    // Shield resets instantly on round start IF player has the keystone
+    if (statShieldOnRoundStart && statShieldUnlocked) {
+        felix.shieldActive = true;
+        felix.shieldRegenTimer = 0;
+    }
 }
 
 function spawnParticles(x, y, color, count) {
@@ -364,9 +373,24 @@ function updatePhysics() {
     if (gameState !== 'PLAY') return;
     frameCount++; if (cameraShake > 0) cameraShake--;
     if (felix.invincibleTimer > 0) felix.invincibleTimer--;
+    
+    // Process Cooldowns
+    if (felix.swingCooldown > 0) felix.swingCooldown--;
+    if (felix.actionTimer > 0) felix.actionTimer--;
+
+    // Process Background Shield Regen
+    if (statShieldUnlocked && !felix.shieldActive) {
+        if (felix.shieldRegenTimer > 0) {
+            felix.shieldRegenTimer--;
+            if (felix.shieldRegenTimer <= 0) {
+                felix.shieldActive = true;
+                sfx.win();
+                spawnFloatText(PAD_X + felix.col * CELL_W + CELL_W/2, PAD_Y + felix.row * CELL_H + 20, "SHIELD READY", "#0ff");
+            }
+        }
+    }
 
     felix.xOffset *= 0.7; felix.yOffset *= 0.7;
-    if (felix.actionTimer > 0) felix.actionTimer--;
 
     let speed = (1.5 + (level * 0.3)) * statRalphSpeed;
     if (ralph.state === 'IDLE') {
@@ -430,7 +454,9 @@ function takeDamage(baseDmg, fx, fy) {
     }
 
     if (felix.shieldActive) {
-        felix.shieldActive = false; felix.invincibleTimer = 60;
+        felix.shieldActive = false; 
+        felix.invincibleTimer = 60;
+        felix.shieldRegenTimer = statShieldRegenTime; // Start the background regen timer
         spawnParticles(fx, fy, '#0ff', 30); spawnFloatText(fx, fy - 20, "BLOCKED!", "#0ff");
         sfx.jump(); vibe(20); return;
     }
@@ -466,20 +492,32 @@ function handleInput(dx, dy) {
 
 function handleFix() {
     if (gameState !== 'PLAY') return;
-    felix.actionTimer = statFixTimer;
+    
+    // Check if hammer is on cooldown
+    if (felix.swingCooldown > 0) return;
+    
+    // Trigger cooldown and visually limit animation duration so it doesn't get stuck open
+    felix.swingCooldown = statHammerCooldown;
+    felix.actionTimer = Math.min(10, statHammerCooldown);
     
     let w = windows.find(w => w.col === felix.col && w.row === felix.row);
     let wx = PAD_X + w.col * CELL_W + CELL_W/2; let wy = PAD_Y + w.row * CELL_H + CELL_H/2;
 
     if (w && w.state > 0) {
-        if (w.state >= 2 && Math.random() < statCritFix) {
-            w.state = 1; spawnFloatText(wx, wy, "CRIT!", "#ff0");
-        }
-
-        w.state--; w.anim = 10; score += Math.floor(50 * statScoreMult);
+        let oldState = w.state;
+        
+        // Apply the upgraded fix power
+        w.state -= statFixPower;
+        if (w.state < 0) w.state = 0; 
+        w.anim = 10;
+        
+        // Award combo points based on how many cracks were healed simultaneously
+        let healedCracks = oldState - w.state;
+        score += Math.floor(50 * healedCracks * statScoreMult);
+        
         spawnParticles(wx, wy, '#fff', 10); vibe(20);
         
-        if (w.state === 0) {
+        if (w.state === 0 && oldState > 0) {
             score += Math.floor(100 * statScoreMult); sfx.fixComplete(); spawnParticles(wx, wy, '#8df', 15); checkWin();
         } else { sfx.fixHit(); }
     } else { sfx.fixHit(); }
@@ -555,10 +593,11 @@ function drawRender() {
     if (felix.invincibleTimer === 0 || Math.floor(frameCount / 4) % 2 === 0) {
         let fx = PAD_X + felix.col * CELL_W + 25 + felix.xOffset; let fy = PAD_Y + felix.row * CELL_H + 30 + felix.yOffset;
         
+        // Draw Active Shield Background
         if (felix.shieldActive) { 
             ctx.beginPath(); ctx.arc(fx, fy - 5, 28, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0, 255, 255, 0.2)'; ctx.fill();
-        }
-
+        } 
+        
         drawRect(fx-10, fy, 20, 25, '#05f'); drawRect(fx-8, fy-15, 16, 15, '#fca');
         drawRect(fx-10, fy-20, 20, 8, '#05f'); drawRect(fx-5, fy+25, 10, 10, '#531');
         
@@ -567,8 +606,19 @@ function drawRender() {
             drawRect(-2, -15, 4, 20, '#852'); drawRect(-8, -20, 16, 8, '#fd0'); ctx.restore();
         } else { drawRect(fx+10, fy+10, 4, 15, '#852'); drawRect(fx+6, fy+22, 12, 6, '#fd0'); }
 
+        // Draw Active Shield Foreground Outline
         if (felix.shieldActive) { 
             ctx.beginPath(); ctx.arc(fx, fy - 5, 28, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; ctx.stroke();
+        }
+        
+        // Draw Shield Regen Visual Timer (If unlocked but broken)
+        if (statShieldUnlocked && !felix.shieldActive && felix.shieldRegenTimer > 0) {
+            let pct = 1 - (felix.shieldRegenTimer / statShieldRegenTime);
+            ctx.beginPath();
+            ctx.arc(fx, fy - 5, 28, -Math.PI/2, (-Math.PI/2) + (Math.PI * 2 * pct));
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+            ctx.stroke();
         }
     }
 
@@ -632,7 +682,15 @@ function launchGame() {
     initAudio(); 
     document.getElementById('start-overlay').style.display = 'none';
     document.getElementById('skill-tree-overlay').style.display = 'none';
-    score = 0; level = selectedCheckpoint; calculateStats(); initLevel(); gameState = 'PLAY'; startMusic();
+    
+    score = 0; level = selectedCheckpoint; calculateStats(); 
+    
+    // Give shield on run start
+    felix.shieldActive = statShieldUnlocked;
+    felix.shieldRegenTimer = 0;
+    felix.swingCooldown = 0;
+    
+    initLevel(); gameState = 'PLAY'; startMusic();
 }
 
 document.getElementById('btn-insert-coin').addEventListener('click', launchGame);
