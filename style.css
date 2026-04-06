@@ -96,11 +96,17 @@ canvas { display: block; width: 100%; height: 100%; background: #258; image-rend
 .node-notable { width: 70px; height: 70px; border: 4px solid #0070dd; box-shadow: 0 0 20px rgba(0, 112, 221, 0.6); font-size: 28px; }
 .node-keystone { width: 90px; height: 90px; border: 6px solid #ff8000; box-shadow: 0 0 30px rgba(255, 128, 0, 0.8); font-size: 36px; }
 
+/* MINI NODES */
+.mini-node { width: 20px; height: 20px; border: 2px solid #555; background: #1a1a1a; box-shadow: 0 2px 5px rgba(0,0,0,0.8); color: #fff;}
+.mini-node.unlocked { border-color: #4caf50 !important; background: #131; box-shadow: 0 0 10px rgba(76, 175, 80, 0.6) !important; animation: none; }
+.mini-node.available { border-color: #ffd700 !important; background: #441; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6) !important; animation: pulse-avail-mini 2s infinite; }
+
 .skill-node.locked { filter: brightness(0.3) grayscale(100%); }
-.skill-node.available { animation: pulse-avail 2s infinite; }
-.skill-node.unlocked { border-color: #4caf50 !important; background: #131; box-shadow: 0 0 25px rgba(76, 175, 80, 0.8) !important; animation: none; }
+.skill-node.available:not(.mini-node) { animation: pulse-avail 2s infinite; }
+.skill-node.unlocked:not(.mini-node) { border-color: #4caf50 !important; background: #131; box-shadow: 0 0 25px rgba(76, 175, 80, 0.8) !important; animation: none; }
 
 @keyframes pulse-avail { 0% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } 50% { transform: translate(-50%, -50%) scale(1.1); filter: brightness(1.3); } 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } }
+@keyframes pulse-avail-mini { 0% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } 50% { transform: translate(-50%, -50%) scale(1.2); filter: brightness(1.3); } 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } }
 
 /* === MODALS (Node & Stats) === */
 .modal-ui {
