@@ -988,7 +988,6 @@ function togglePause() {
     if (gameState === 'PLAY') {
         gameState = 'PAUSED';
         document.getElementById('pause-overlay').style.display = 'flex';
-        // Now hide the button in its new position
         document.getElementById('pause-btn').style.opacity = '0.2'; 
         stopMusic();
     } else if (gameState === 'PAUSED') {
@@ -1005,7 +1004,6 @@ document.getElementById('btn-continue').addEventListener('click', togglePause);
 document.getElementById('btn-surrender').addEventListener('click', () => {
     if (gameState === 'PAUSED') {
         document.getElementById('pause-overlay').style.display = 'none';
-        // Reset the button state on surrender
         document.getElementById('pause-btn').style.opacity = '1';
         handleDeath();
     }
@@ -1016,7 +1014,6 @@ function launchGame() {
     document.getElementById('start-overlay').style.display = 'none'; document.getElementById('skill-tree-overlay').style.display = 'none';
     level = selectedCheckpoint; wrenchesEarnedThisRun = 0; calculateStats(); 
     felix.shieldActive = statShieldUnlocked; felix.shieldRegenTimer = 0; felix.lastSwingTime = 0;
-    // Keep button visible
     document.getElementById('pause-btn').style.display = 'flex';
     document.getElementById('pause-btn').style.opacity = '1';
     initLevel(); gameState = 'PLAY'; startMusic();
