@@ -1,69 +1,64 @@
-// AUTO-EXPAND THE SKILL MAP FOR THE MASSIVE TREE
-document.getElementById('map-content').style.width = '2000px';
-document.getElementById('map-content').style.height = '2000px';
-document.getElementById('skill-lines').width = 2000;
-document.getElementById('skill-lines').height = 2000;
-
 /**
  * MASSIVE METAPROGRESSION SYSTEM
  */
 let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
 let selectedCheckpoint = 1;
 
-// 2000x2000 Map Coordinates (Center is 1000,1000)
+// Massively Expanded 3000x3000 Map Coordinates (Center is 1500,1500)
+// This completely fixes the overlapping nodes seen in earlier builds.
 const SKILL_TREE = {
-    'node_base': { x: 1000, y: 1000, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
+    'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
     
-    // --- AGILITY BRANCH (Top Left) ---
-    'agi_1': { x: 875, y: 875, name: 'Light Hammer', cost: 5, req: 'node_base', desc: 'Fix windows 10% faster.', type: 'normal' },
-    'agi_2': { x: 750, y: 750, name: 'Quick Step', cost: 15, req: 'agi_1', desc: 'Fix windows 20% faster.', type: 'normal' },
-    'agi_hand': { x: 625, y: 625, name: 'Coffee Break', cost: 40, req: 'agi_2', desc: 'Fix windows 40% faster.', type: 'notable' },
+    // --- AGILITY BRANCH (Top Left Diagonal) ---
+    'agi_1': { x: 1250, y: 1250, name: 'Light Hammer', cost: 5, req: 'node_base', desc: 'Fix windows 10% faster.', type: 'normal' },
+    'agi_2': { x: 1000, y: 1000, name: 'Quick Step', cost: 15, req: 'agi_1', desc: 'Fix windows 20% faster.', type: 'normal' },
+    'agi_hand': { x: 750, y: 750, name: 'Coffee Break', cost: 40, req: 'agi_2', desc: 'Fix windows 40% faster.', type: 'notable' },
     
-    // Agility Fork A (Dodge)
-    'agi_ev1': { x: 750, y: 500, name: 'Lucky Shoes', cost: 30, req: 'agi_hand', desc: '5% chance to dodge any falling object.', type: 'normal' },
-    'agi_gst': { x: 875, y: 375, name: 'Ghost Step', cost: 80, req: 'agi_ev1', desc: '15% chance to dodge any falling object.', type: 'notable' },
+    // Agility Fork A (Dodge - UP)
+    'agi_ev1': { x: 750, y: 450, name: 'Lucky Shoes', cost: 30, req: 'agi_hand', desc: '5% chance to dodge any falling object.', type: 'normal' },
+    'agi_gst': { x: 750, y: 150, name: 'Ghost Step', cost: 80, req: 'agi_ev1', desc: '15% chance to dodge any falling object.', type: 'notable' },
     
-    // Agility Fork B (Crit Fix)
-    'agi_ch1': { x: 500, y: 750, name: 'Good Swing', cost: 30, req: 'agi_hand', desc: '5% chance to fix a fully broken window in 1 hit.', type: 'normal' },
-    'agi_mst': { x: 375, y: 875, name: 'Master Builder', cost: 80, req: 'agi_ch1', desc: '15% chance to fix a fully broken window in 1 hit.', type: 'notable' },
+    // Agility Fork B (Crit Fix - LEFT)
+    'agi_ch1': { x: 450, y: 750, name: 'Good Swing', cost: 30, req: 'agi_hand', desc: '5% chance to fix a fully broken window in 1 hit.', type: 'normal' },
+    'agi_mst': { x: 150, y: 750, name: 'Master Builder', cost: 80, req: 'agi_ch1', desc: '15% chance to fix a fully broken window in 1 hit.', type: 'notable' },
     
-    // Agility Main Path
+    // Agility Main Path (Continue Diagonal)
     'agi_3': { x: 500, y: 500, name: 'Adrenaline', cost: 100, req: 'agi_hand', desc: 'Increases Invincibility frames by 1 second.', type: 'normal' },
-    'agi_ninj': { x: 375, y: 375, name: 'Felix Ninja', cost: 300, req: 'agi_3', desc: '+30% Dodge Chance, +25% 1-Hit Fix Chance.', type: 'keystone' },
+    'agi_ninj': { x: 250, y: 250, name: 'Felix Ninja', cost: 300, req: 'agi_3', desc: '+30% Dodge Chance, +25% 1-Hit Fix Chance.', type: 'keystone' },
 
-    // --- TANK BRANCH (Top Right) ---
-    'tnk_1': { x: 1125, y: 875, name: 'Thick Gloves', cost: 5, req: 'node_base', desc: '+10 Max HP.', type: 'normal' },
-    'tnk_2': { x: 1250, y: 750, name: 'Steel Toes', cost: 15, req: 'tnk_1', desc: '+15 Max HP.', type: 'normal' },
-    'tnk_hat': { x: 1375, y: 625, name: 'Hard Hat', cost: 40, req: 'tnk_2', desc: '+50 Max HP.', type: 'notable' },
+    // --- TANK BRANCH (Top Right Diagonal) ---
+    'tnk_1': { x: 1750, y: 1250, name: 'Thick Gloves', cost: 5, req: 'node_base', desc: '+10 Max HP.', type: 'normal' },
+    'tnk_2': { x: 2000, y: 1000, name: 'Steel Toes', cost: 15, req: 'tnk_1', desc: '+15 Max HP.', type: 'normal' },
+    'tnk_hat': { x: 2250, y: 750, name: 'Hard Hat', cost: 40, req: 'tnk_2', desc: '+50 Max HP.', type: 'notable' },
     
-    // Tank Fork A (Shield)
-    'tnk_sh1': { x: 1250, y: 500, name: 'Battery Pack', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
-    'tnk_vst': { x: 1125, y: 375, name: 'Kevlar Vest', cost: 80, req: 'tnk_sh1', desc: 'Energy shield absorbs the first hit of every level.', type: 'notable' },
+    // Tank Fork A (Shield - UP)
+    'tnk_sh1': { x: 2250, y: 450, name: 'Battery Pack', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
+    'tnk_vst': { x: 2250, y: 150, name: 'Kevlar Vest', cost: 80, req: 'tnk_sh1', desc: 'Energy shield absorbs the first hit of every level.', type: 'notable' },
     
-    // Tank Fork B (Regen)
-    'tnk_rg1': { x: 1500, y: 750, name: 'First Aid', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
-    'tnk_med': { x: 1625, y: 875, name: 'Paramedic', cost: 80, req: 'tnk_rg1', desc: 'Heal 10% of Max HP upon clearing a level.', type: 'notable' },
+    // Tank Fork B (Regen - RIGHT)
+    'tnk_rg1': { x: 2550, y: 750, name: 'First Aid', cost: 30, req: 'tnk_hat', desc: '+20 Max HP.', type: 'normal' },
+    'tnk_med': { x: 2850, y: 750, name: 'Paramedic', cost: 80, req: 'tnk_rg1', desc: 'Heal 10% of Max HP upon clearing a level.', type: 'notable' },
     
-    // Tank Main Path
-    'tnk_3': { x: 1500, y: 500, name: 'Iron Will', cost: 100, req: 'tnk_hat', desc: '+40 Max HP.', type: 'normal' },
-    'tnk_osh': { x: 1625, y: 375, name: 'OSHA Boss', cost: 300, req: 'tnk_3', desc: '+150 Max HP. Incoming damage reduced by 5.', type: 'keystone' },
+    // Tank Main Path (Continue Diagonal)
+    'tnk_3': { x: 2500, y: 500, name: 'Iron Will', cost: 100, req: 'tnk_hat', desc: '+40 Max HP.', type: 'normal' },
+    'tnk_osh': { x: 2750, y: 250, name: 'OSHA Boss', cost: 300, req: 'tnk_3', desc: '+150 Max HP. Incoming damage reduced by 5.', type: 'keystone' },
 
-    // --- ECONOMY BRANCH (Bottom) ---
-    'eco_1': { x: 1000, y: 1150, name: 'Union Dues', cost: 5, req: 'node_base', desc: 'Base score increased by +10%.', type: 'normal' },
-    'eco_2': { x: 1000, y: 1300, name: 'Pensions', cost: 15, req: 'eco_1', desc: 'Base score increased by +20%.', type: 'normal' },
-    'eco_uni': { x: 1000, y: 1450, name: 'Foreman', cost: 40, req: 'eco_2', desc: 'Base score increased by +50%.', type: 'notable' },
+    // --- ECONOMY BRANCH (Bottom Straight Down) ---
+    'eco_1': { x: 1500, y: 1750, name: 'Union Dues', cost: 5, req: 'node_base', desc: 'Base score increased by +10%.', type: 'normal' },
+    'eco_2': { x: 1500, y: 2000, name: 'Pensions', cost: 15, req: 'eco_1', desc: 'Base score increased by +20%.', type: 'normal' },
+    'eco_uni': { x: 1500, y: 2250, name: 'Foreman', cost: 40, req: 'eco_2', desc: 'Base score increased by +50%.', type: 'notable' },
     
-    // Economy Fork A (Wrenches)
-    'eco_wr1': { x: 850, y: 1450, name: 'Shiny Metal', cost: 30, req: 'eco_uni', desc: 'Earn 1 Wrench per 80 pts instead of 100.', type: 'normal' },
-    'eco_ham': { x: 700, y: 1450, name: 'Golden Hammer', cost: 80, req: 'eco_wr1', desc: 'Earn 1 Wrench per 50 pts.', type: 'notable' },
+    // Economy Fork A (Wrenches - LEFT)
+    'eco_wr1': { x: 1200, y: 2250, name: 'Shiny Metal', cost: 30, req: 'eco_uni', desc: 'Earn 1 Wrench per 80 pts instead of 100.', type: 'normal' },
+    'eco_ham': { x: 900, y: 2250, name: 'Golden Hammer', cost: 80, req: 'eco_wr1', desc: 'Earn 1 Wrench per 50 pts.', type: 'notable' },
     
-    // Economy Fork B (Armor)
-    'eco_ar1': { x: 1150, y: 1450, name: 'Padded Shirt', cost: 30, req: 'eco_uni', desc: 'Take 5 less damage from all hits.', type: 'normal' },
-    'eco_pl8': { x: 1300, y: 1450, name: 'Riot Gear', cost: 80, req: 'eco_ar1', desc: 'Take 15 less damage from all hits.', type: 'notable' },
+    // Economy Fork B (Armor - RIGHT)
+    'eco_ar1': { x: 1800, y: 2250, name: 'Padded Shirt', cost: 30, req: 'eco_uni', desc: 'Take 5 less damage from all hits.', type: 'normal' },
+    'eco_pl8': { x: 2100, y: 2250, name: 'Riot Gear', cost: 80, req: 'eco_ar1', desc: 'Take 15 less damage from all hits.', type: 'notable' },
     
-    // Economy Main Path
-    'eco_3': { x: 1000, y: 1600, name: 'Hazard Pay', cost: 150, req: 'eco_uni', desc: 'Base score increased by +100%.', type: 'normal' },
-    'eco_ovr': { x: 1000, y: 1750, name: 'Overtime', cost: 400, req: 'eco_3', desc: 'Score x3. Earn Wrenches at 30 pts. Bricks fall 30% faster.', type: 'keystone' }
+    // Economy Main Path (Continue Down)
+    'eco_3': { x: 1500, y: 2550, name: 'Hazard Pay', cost: 150, req: 'eco_uni', desc: 'Base score increased by +100%.', type: 'normal' },
+    'eco_ovr': { x: 1500, y: 2850, name: 'Overtime', cost: 400, req: 'eco_3', desc: 'Score x3. Earn Wrenches at 30 pts. Bricks fall 30% faster.', type: 'keystone' }
 };
 
 function loadGame() {
@@ -105,7 +100,7 @@ function renderSkillTree() {
     container.innerHTML = '';
 
     const lineCtx = document.getElementById('skill-lines').getContext('2d');
-    lineCtx.clearRect(0, 0, 2000, 2000); lineCtx.lineWidth = 4;
+    lineCtx.clearRect(0, 0, 3000, 3000); lineCtx.lineWidth = 4;
 
     for (const [id, data] of Object.entries(SKILL_TREE)) {
         let isUnlocked = hasSkill(id);
@@ -145,43 +140,94 @@ function renderSkillTree() {
     }
 }
 
-// Map Dragging Logic
+// ZOOM & DRAG ENGINE
 let mapViewport = document.getElementById('map-viewport');
-let isDragging = false, startX, startY, scrollLeft, scrollTop;
+let mapContent = document.getElementById('map-content');
+let isDragging = false, startX, startY;
+let mapX = 0, mapY = 0, mapZoom = 0.8;
+let initialDistance = null, initialZoom = 1;
 
+function updateMapTransform() {
+    mapContent.style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapZoom})`;
+}
+
+function setZoom(newZoom) {
+    let oldZoom = mapZoom;
+    mapZoom = Math.max(0.3, Math.min(newZoom, 1.5));
+    
+    // Keep map centered on screen while zooming with buttons
+    let viewportCenterX = mapViewport.clientWidth / 2;
+    let viewportCenterY = mapViewport.clientHeight / 2;
+    let mapCenterX = (viewportCenterX - mapX) / oldZoom;
+    let mapCenterY = (viewportCenterY - mapY) / oldZoom;
+    
+    mapX = viewportCenterX - (mapCenterX * mapZoom);
+    mapY = viewportCenterY - (mapCenterY * mapZoom);
+    updateMapTransform();
+}
+
+// UI Zoom Buttons
+document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(mapZoom + 0.2));
+document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(mapZoom - 0.2));
+
+// Mouse Drag
 mapViewport.addEventListener('mousedown', (e) => {
-    isDragging = true; startX = e.pageX - mapViewport.offsetLeft; startY = e.pageY - mapViewport.offsetTop;
-    scrollLeft = mapViewport.scrollLeft; scrollTop = mapViewport.scrollTop;
+    isDragging = true; startX = e.pageX - mapX; startY = e.pageY - mapY;
 });
 mapViewport.addEventListener('mouseleave', () => { isDragging = false; });
 mapViewport.addEventListener('mouseup', () => { isDragging = false; });
 mapViewport.addEventListener('mousemove', (e) => {
     if (!isDragging) return; e.preventDefault();
-    const x = e.pageX - mapViewport.offsetLeft; const y = e.pageY - mapViewport.offsetTop;
-    mapViewport.scrollLeft = scrollLeft - (x - startX); mapViewport.scrollTop = scrollTop - (y - startY);
+    mapX = e.pageX - startX; mapY = e.pageY - startY; updateMapTransform();
 });
 
+// Touch Drag & Pinch-to-Zoom
 mapViewport.addEventListener('touchstart', (e) => {
-    isDragging = true; startX = e.touches[0].pageX - mapViewport.offsetLeft; startY = e.touches[0].pageY - mapViewport.offsetTop;
-    scrollLeft = mapViewport.scrollLeft; scrollTop = mapViewport.scrollTop;
+    if (e.touches.length === 2) {
+        isDragging = false;
+        initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        initialZoom = mapZoom;
+    } else if (e.touches.length === 1) {
+        isDragging = true; 
+        startX = e.touches[0].pageX - mapX; startY = e.touches[0].pageY - mapY;
+    }
 });
 mapViewport.addEventListener('touchend', () => { isDragging = false; });
 mapViewport.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    const x = e.touches[0].pageX - mapViewport.offsetLeft; const y = e.touches[0].pageY - mapViewport.offsetTop;
-    mapViewport.scrollLeft = scrollLeft - (x - startX); mapViewport.scrollTop = scrollTop - (y - startY);
-});
+    e.preventDefault(); // Prevents browser pull-to-refresh
+    if (e.touches.length === 2 && initialDistance) {
+        let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        let ratio = currentDist / initialDistance;
+        let newZoom = Math.max(0.3, Math.min(initialZoom * ratio, 1.5));
+        
+        let viewportCenterX = mapViewport.clientWidth / 2;
+        let viewportCenterY = mapViewport.clientHeight / 2;
+        let mapCenterX = (viewportCenterX - mapX) / mapZoom;
+        let mapCenterY = (viewportCenterY - mapY) / mapZoom;
+        
+        mapZoom = newZoom;
+        mapX = viewportCenterX - (mapCenterX * mapZoom);
+        mapY = viewportCenterY - (mapCenterY * mapZoom);
+        updateMapTransform();
+    } else if (e.touches.length === 1 && isDragging) {
+        mapX = e.touches[0].pageX - startX; mapY = e.touches[0].pageY - startY; updateMapTransform();
+    }
+}, { passive: false });
 
 function openSkillTree() {
     renderSkillTree();
     document.getElementById('start-overlay').style.display = 'none';
     document.getElementById('skill-tree-overlay').style.display = 'block';
-    // Center the 2000x2000 map
-    mapViewport.scrollLeft = 1000 - (mapViewport.clientWidth / 2);
-    mapViewport.scrollTop = 1000 - (mapViewport.clientHeight / 2);
+    
+    // Center the map logic
+    mapZoom = 0.8;
+    mapX = (mapViewport.clientWidth / 2) - (1500 * mapZoom);
+    mapY = (mapViewport.clientHeight / 2) - (1500 * mapZoom);
+    updateMapTransform();
 }
 
 loadGame();
+
 
 /**
  * AUDIO ENGINE
@@ -283,7 +329,6 @@ function calculateStats() {
 function initLevel() {
     windows = []; bricks = []; particles = []; birds = [];
     
-    // DIFFICULTY WALLS
     let maxWindowState = 1;
     if (level >= 4) maxWindowState = 2;
     if (level >= 10) maxWindowState = 3;
@@ -350,7 +395,6 @@ function updatePhysics() {
 
     let fx = PAD_X + felix.col * CELL_W + CELL_W/2; let fy = PAD_Y + felix.row * CELL_H + CELL_H/2;
 
-    // SCALING DAMAGE
     let brickDmg = 35 + Math.max(0, level - 20) * 2;
     let birdDmg = 20 + Math.max(0, level - 20) * 1.5;
 
@@ -491,12 +535,11 @@ function drawRender() {
         } else {
             drawRect(x+5, y+5, 40, 50, '#4af');
             
-            // Multiple crack layers based on damage
             ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); 
             ctx.moveTo(x+25, y+5); ctx.lineTo(x+15, y+25); ctx.lineTo(x+5, y+25); 
             if (w.state >= 2) { ctx.moveTo(x+35, y+45); ctx.lineTo(x+25, y+25); }
             if (w.state >= 3) { ctx.moveTo(x+5, y+45); ctx.lineTo(x+15, y+25); }
-            if (w.state >= 4) { drawRect(x+15, y+15, 10, 10, '#000'); } // Hole
+            if (w.state >= 4) { drawRect(x+15, y+15, 10, 10, '#000'); } 
             ctx.stroke();
         }
     });
@@ -533,18 +576,14 @@ function drawRender() {
     bricks.forEach(b => { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot); drawRect(-10, -6, 20, 12, '#822'); ctx.restore(); });
     particles.forEach(p => drawRect(p.x, p.y, 4, 4, p.color));
     
-    // Draw Floating Combat Text
     ctx.font = '8px "Press Start 2P", monospace';
     floatTexts.forEach(ft => {
-        ctx.fillStyle = ft.color;
-        ctx.globalAlpha = ft.life / 40;
-        ctx.fillText(ft.text, ft.x - 10, ft.y);
-        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = ft.color; ctx.globalAlpha = ft.life / 40;
+        ctx.fillText(ft.text, ft.x - 10, ft.y); ctx.globalAlpha = 1.0;
     });
 
     ctx.restore(); 
 
-    // HUD
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, 50); ctx.fillStyle = '#333'; ctx.fillRect(0, 50, canvas.width, 4); 
     ctx.fillStyle = '#0f0'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillText(`SCORE:${score.toString().padStart(6,'0')}`, 10, 20);
     ctx.fillStyle = '#fff'; ctx.fillText(`LVL:${level}`, 10, 40);
@@ -579,9 +618,6 @@ function drawRender() {
 
 function loop() { updatePhysics(); drawRender(); requestAnimationFrame(loop); }
 
-/**
- * UI BINDINGS & CONTROLS
- */
 function bindBtn(id, action) {
     const el = document.getElementById(id);
     const trigger = (e) => { e.preventDefault(); action(); };
