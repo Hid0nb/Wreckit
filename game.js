@@ -12,10 +12,9 @@ function fNum(num) {
     return Math.floor(num).toString();
 }
 
-let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
+let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1, miniNodes: {} };
 let selectedCheckpoint = 1; let selectedNodeId = null;
 
-// MASSIVE 99-NODE SKILL TREE
 const SKILL_TREE = {
     'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
     
@@ -96,17 +95,17 @@ const SKILL_TREE = {
     'eco_11': { x: 900, y: 2700, name: 'Galactic Mint', cost: 1e15, req: 'eco_10', desc: 'Wrenches x100', type: 'notable' },
     'eco_max2': { x: 750, y: 2700, name: 'Post-Scarcity', cost: 1e16, req: 'eco_11', desc: 'Wrenches x1,000', type: 'keystone' },
 
-    // NEW Economy Fork: Clear Bonus
-    'clr_1': { x: 1350, y: 1950, name: 'Job Well Done', cost: 5000, req: 'eco_3', desc: '+1,000 Base Clear Bonus', type: 'normal' },
-    'clr_2': { x: 1200, y: 1950, name: 'Completionist', cost: 50000, req: 'clr_1', desc: '+10,000 Base Clear Bonus', type: 'normal' },
-    'clr_max': { x: 1050, y: 1950, name: 'Master Builder', cost: 1000000, req: 'clr_2', desc: 'Clear Bonus x5', type: 'keystone' },
+    // Economy Fork: Clear Bonus
+    'clr_1': { x: 1350, y: 1950, name: 'Job Well Done', cost: 5000, req: 'eco_3', desc: '+50 Base Clear Bonus', type: 'normal' },
+    'clr_2': { x: 1200, y: 1950, name: 'Completionist', cost: 50000, req: 'clr_1', desc: '+250 Base Clear Bonus', type: 'normal' },
+    'clr_max': { x: 1050, y: 1950, name: 'Master Builder', cost: 1000000, req: 'clr_2', desc: 'Clear Bonus x2', type: 'keystone' },
 
-    // NEW Economy Fork: Grind Yield
+    // Economy Fork: Grind Yield
     'grnd_1': { x: 1350, y: 2100, name: 'Efficiency', cost: 10000, req: 'eco_4', desc: 'Grinding yields 65%', type: 'normal' },
     'grnd_2': { x: 1200, y: 2100, name: 'Routine', cost: 100000, req: 'grnd_1', desc: 'Grinding yields 70%', type: 'notable' },
     'grnd_max': { x: 1050, y: 2100, name: 'Muscle Memory', cost: 5000000, req: 'grnd_2', desc: 'Grinding yields 80%', type: 'keystone' },
 
-    // NEW Economy Fork: Bank Interest
+    // Economy Fork: Bank Interest
     'int_1': { x: 1350, y: 2400, name: 'Savings Account', cost: 1000000, req: 'eco_6', desc: '+0.1% Banked Wrenches on Clear', type: 'normal' },
     'int_2': { x: 1200, y: 2400, name: 'Investments', cost: 50000000, req: 'int_1', desc: '+0.25% Banked Wrenches on Clear', type: 'notable' },
     'int_max': { x: 1050, y: 2400, name: 'Compound Interest', cost: 1e9, req: 'int_2', desc: '+0.5% Banked Wrenches on Clear', type: 'keystone' },
@@ -119,7 +118,7 @@ const SKILL_TREE = {
     'nrf_5': { x: 2250, y: 2100, name: 'Safety Audit', cost: 50000000, req: 'nrf_4', desc: 'Bricks do 50% less DMG', type: 'notable' },
     'nrf_max': { x: 2400, y: 2100, name: 'OSHA Mandate', cost: 1e9, req: 'nrf_5', desc: 'Ralph speed & damage reduced by 75%', type: 'keystone' },
 
-    // TURBO TIMER FORK (Off Ralph Nerf)
+    // TURBO TIMER FORK
     'trb_1': { x: 1800, y: 2250, name: 'Snooze Button', cost: 50000, req: 'nrf_2', desc: '+2s Turbo Timer', type: 'normal' },
     'trb_2': { x: 1800, y: 2400, name: 'Deadline Ext', cost: 500000, req: 'trb_1', desc: '+3s Turbo Timer', type: 'normal' },
     'trb_3': { x: 1800, y: 2550, name: 'Time Mgmt', cost: 5000000, req: 'trb_2', desc: '+5s Turbo Timer', type: 'notable' },
@@ -154,20 +153,32 @@ const SKILL_TREE = {
     'ms_max': { x: 900, y: 2400, name: 'Caffeine Rush', cost: 1e9, req: 'ms_5', desc: 'Guaranteed Triple Strike!', type: 'keystone' }
 };
 
+function getMiniBonusDesc(id) {
+    if (id.startsWith('pow') || id.startsWith('crit') || id.startsWith('rot')) return { text: '+5 Hammer DMG per node', type: 'pow' };
+    if (id.startsWith('tnk') || id.startsWith('shld') || id.startsWith('reg')) return { text: '+25 Max HP per node', type: 'tnk' };
+    if (id.startsWith('eco') || id.startsWith('nrf') || id.startsWith('trb') || id.startsWith('clr') || id.startsWith('grnd') || id.startsWith('int')) return { text: '+2% Wrench Mult per node', type: 'eco' };
+    if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) return { text: '+0.2% Dodge per node', type: 'agi' };
+    return { text: '', type: 'none' };
+}
+
 function loadGame() {
     try {
-        let saved = localStorage.getItem('fixItFelixRPG_v6'); 
+        let saved = localStorage.getItem('fixItFelixRPG_v8') || localStorage.getItem('fixItFelixRPG_v7'); 
         if (saved) {
             let parsed = JSON.parse(saved);
             saveData.wrenches = parsed.wrenches || 0;
             saveData.unlocked = parsed.unlocked || ['node_base'];
             saveData.maxLevel = parsed.maxLevel || 1;
+            saveData.miniNodes = parsed.miniNodes || {};
         }
+        // Retroactively grant mini-nodes for already unlocked skills
+        saveData.unlocked.forEach(id => { if (id !== 'node_base') saveData.miniNodes[id] = 6; });
     } catch (e) { console.warn("Save load failed", e); }
+    if (!saveData.miniNodes) saveData.miniNodes = {};
     updateCheckpointUI();
 }
 
-function saveGame() { try { localStorage.setItem('fixItFelixRPG_v6', JSON.stringify(saveData)); } catch (e) { console.warn("Save failed", e); } }
+function saveGame() { try { localStorage.setItem('fixItFelixRPG_v8', JSON.stringify(saveData)); } catch (e) { console.warn("Save failed", e); } }
 
 function hasSkill(id) { return saveData.unlocked.includes(id); }
 function getMaxCheckpoint() { return Math.max(1, Math.floor((saveData.maxLevel - 1) / 10) * 10 + 1); }
@@ -188,8 +199,17 @@ let statClearBonusFlat = 0; let statClearBonusMult = 1;
 let statGrindYield = 0.6; let statInterestRate = 0;
 
 function calculateStats() {
+    // Tally Mini-Nodes First
+    let miniPow = 0, miniTnk = 0, miniEco = 0, miniAgi = 0;
+    for (let [id, count] of Object.entries(saveData.miniNodes)) {
+        if (id.startsWith('pow') || id.startsWith('crit') || id.startsWith('rot')) miniPow += count;
+        else if (id.startsWith('tnk') || id.startsWith('shld') || id.startsWith('reg')) miniTnk += count;
+        else if (id.startsWith('eco') || id.startsWith('nrf') || id.startsWith('trb') || id.startsWith('clr') || id.startsWith('grnd') || id.startsWith('int')) miniEco += count;
+        else if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) miniAgi += count;
+    }
+
     // HP
-    let hpFlat = 0; let hpMult = 1;
+    let hpFlat = miniTnk * 25; let hpMult = 1;
     if (hasSkill('tnk_1')) hpFlat += 50; if (hasSkill('tnk_2')) hpFlat += 500; if (hasSkill('tnk_3')) hpFlat += 5000;
     if (hasSkill('tnk_5')) hpFlat += 1e5; if (hasSkill('tnk_7')) hpFlat += 5e7;
     if (hasSkill('tnk_8')) hpFlat += 1e9; if (hasSkill('tnk_10')) hpFlat += 1e11;
@@ -198,7 +218,7 @@ function calculateStats() {
     maxHp = (100 + hpFlat) * hpMult; hp = maxHp;
     
     // DMG
-    let dmgFlat = 0; let dmgMult = 1;
+    let dmgFlat = miniPow * 5; let dmgMult = 1;
     if (hasSkill('pow_1')) dmgFlat += 50; if (hasSkill('pow_2')) dmgFlat += 250; if (hasSkill('pow_3')) dmgFlat += 2500;
     if (hasSkill('pow_5')) dmgFlat += 5e4; if (hasSkill('pow_7')) dmgFlat += 1e7;
     if (hasSkill('pow_8')) dmgFlat += 1e9; if (hasSkill('pow_10')) dmgFlat += 1e11;
@@ -208,7 +228,7 @@ function calculateStats() {
 
     // AGI & DODGE
     statHammerCooldownMs = hasSkill('agi_max') ? 0 : hasSkill('agi_5') ? 30 : hasSkill('agi_4') ? 60 : hasSkill('agi_3') ? 100 : hasSkill('agi_2') ? 150 : hasSkill('agi_1') ? 180 : 200;
-    statDodgeChance = (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.25 : 0) + (hasSkill('dge_max') ? 0.50 : 0);
+    statDodgeChance = (miniAgi * 0.002) + (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.25 : 0) + (hasSkill('dge_max') ? 0.50 : 0);
     statIFrames = 90 + (hasSkill('agi_7') ? 30 : 0) + (hasSkill('agi_9') ? 60 : 0) + (hasSkill('agi_max2') ? 120 : 0);
     
     // CRIT
@@ -218,15 +238,15 @@ function calculateStats() {
     statShieldUnlocked = hasSkill('shld_1'); statShieldRegenTime = hasSkill('shld_2') ? 300 : 900; statShieldOnRoundStart = hasSkill('shld_max');
 
     // ECONOMY
-    statWrenchMult = 1.0 + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_2') ? 0.5 : 0) + (hasSkill('eco_3') ? 2.0 : 0);
+    statWrenchMult = 1.0 + (miniEco * 0.02) + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_2') ? 0.5 : 0) + (hasSkill('eco_3') ? 2.0 : 0);
     if (hasSkill('eco_4')) statWrenchMult *= 5; if (hasSkill('eco_5')) statWrenchMult *= 20; if (hasSkill('eco_6')) statWrenchMult *= 100;
     if (hasSkill('eco_7')) statWrenchMult *= 1000; if (hasSkill('eco_max')) statWrenchMult *= 10000;
     if (hasSkill('eco_8')) statWrenchMult *= 5; if (hasSkill('eco_9')) statWrenchMult *= 10; if (hasSkill('eco_10')) statWrenchMult *= 50;
     if (hasSkill('eco_11')) statWrenchMult *= 100; if (hasSkill('eco_max2')) statWrenchMult *= 1000;
 
     // LEVEL CLEAR & GRIND YIELD & INTEREST
-    statClearBonusFlat = (hasSkill('clr_1') ? 1000 : 0) + (hasSkill('clr_2') ? 10000 : 0);
-    statClearBonusMult = hasSkill('clr_max') ? 5 : 1;
+    statClearBonusFlat = (hasSkill('clr_1') ? 50 : 0) + (hasSkill('clr_2') ? 250 : 0);
+    statClearBonusMult = hasSkill('clr_max') ? 2 : 1;
     statGrindYield = 0.6 + (hasSkill('grnd_1') ? 0.05 : 0) + (hasSkill('grnd_2') ? 0.05 : 0) + (hasSkill('grnd_max') ? 0.10 : 0);
     statInterestRate = hasSkill('int_max') ? 0.005 : (hasSkill('int_2') ? 0.0025 : (hasSkill('int_1') ? 0.001 : 0));
 
@@ -262,7 +282,7 @@ function updateStatsModal() {
     document.getElementById('s-rot').innerText = (statRotChance * 100).toFixed(0) + '% Chance';
     document.getElementById('s-crit').innerText = statCritMult + 'x';
     document.getElementById('s-ms').innerText = '+' + statMultiStrike.toFixed(2) + ' Hits';
-    document.getElementById('s-dodge').innerText = (statDodgeChance * 100).toFixed(0) + '%';
+    document.getElementById('s-dodge').innerText = (statDodgeChance * 100).toFixed(1) + '%';
     document.getElementById('s-nerf').innerText = '-' + ((1 - statEnemyDmgMult) * 100).toFixed(0) + '% Dmg';
     document.getElementById('s-trb').innerText = '+' + statTurboTimeBonus + ' Sec';
     document.getElementById('s-wm').innerText = fNum(statWrenchMult) + 'x';
@@ -271,6 +291,67 @@ function updateStatsModal() {
     document.getElementById('s-int').innerText = (statInterestRate * 100).toFixed(2) + '%';
 }
 
+function openNodeModal(id) {
+    selectedNodeId = id;
+    let data = SKILL_TREE[id];
+    let isUnlocked = hasSkill(id);
+    let reqMet = data.req === null || hasSkill(data.req);
+    let boughtMinis = saveData.miniNodes[id] || 0;
+    if (isUnlocked) boughtMinis = 6;
+
+    document.getElementById('nm-title').innerText = data.name;
+    document.getElementById('nm-desc').innerText = data.desc;
+
+    let miniCost = Math.max(1, Math.floor(data.cost * 0.15));
+    let bonusData = getMiniBonusDesc(id);
+
+    let btnBuy = document.getElementById('nm-buy');
+    let btnMini = document.getElementById('nm-buy-mini');
+    let miniSec = document.getElementById('nm-mini-section');
+
+    if (id === 'node_base') {
+        miniSec.style.display = 'none';
+    } else {
+        miniSec.style.display = 'block';
+        document.getElementById('nm-mini-count').innerText = `${boughtMinis}/6`;
+        document.getElementById('nm-mini-bonus').innerText = bonusData.text;
+
+        if (boughtMinis >= 6) {
+            btnMini.innerText = "COMPLETED";
+            btnMini.disabled = true;
+            btnMini.style.background = "#4caf50";
+        } else {
+            btnMini.innerText = `BUY MINI (${fNum(miniCost)} W)`;
+            btnMini.style.background = "#0070dd";
+            btnMini.disabled = !(reqMet && saveData.wrenches >= miniCost);
+        }
+    }
+
+    if (isUnlocked) {
+        document.getElementById('nm-cost').innerText = "✓ ALREADY UNLOCKED";
+        document.getElementById('nm-cost').style.color = "#4caf50";
+        btnBuy.style.display = 'none';
+    } else {
+        document.getElementById('nm-cost').innerText = `Main Cost: ${fNum(data.cost)} W`;
+        document.getElementById('nm-cost').style.color = "#ffd700";
+        btnBuy.style.display = 'block';
+
+        if (reqMet && boughtMinis >= 6 && saveData.wrenches >= data.cost) {
+            btnBuy.disabled = false; btnBuy.innerText = 'UNLOCK MAIN';
+        } else if (!reqMet) {
+            btnBuy.disabled = true; btnBuy.innerText = 'PATH LOCKED';
+        } else if (boughtMinis < 6) {
+            btnBuy.disabled = true; btnBuy.innerText = 'BUY MINIS FIRST';
+        } else {
+            btnBuy.disabled = true; btnBuy.innerText = 'NOT ENOUGH W';
+        }
+    }
+
+    document.getElementById('node-modal').style.display = 'block';
+    document.getElementById('ui-wrenches').innerText = fNum(saveData.wrenches);
+}
+
+
 function renderSkillTree() {
     document.getElementById('ui-wrenches').innerText = fNum(saveData.wrenches);
     const container = document.getElementById('nodes-container'); container.innerHTML = '';
@@ -278,11 +359,29 @@ function renderSkillTree() {
 
     for (const [id, data] of Object.entries(SKILL_TREE)) {
         let isUnlocked = hasSkill(id); let reqMet = data.req === null || hasSkill(data.req);
+        let boughtMinis = saveData.miniNodes[id] || 0;
+        if (isUnlocked) boughtMinis = 6;
         
         if (data.req) {
             let parent = SKILL_TREE[data.req];
             lineCtx.strokeStyle = hasSkill(id) ? '#4caf50' : (reqMet ? '#666' : '#222');
             lineCtx.beginPath(); lineCtx.moveTo(parent.x, parent.y); lineCtx.lineTo(data.x, data.y); lineCtx.stroke();
+        }
+
+        // Draw Mini-Nodes orbiting the main node
+        if (id !== 'node_base' && (reqMet || isUnlocked)) {
+            for(let i=0; i<6; i++) {
+                let angle = (i * Math.PI * 2) / 6 - (Math.PI / 2);
+                let mx = data.x + Math.cos(angle) * 50; 
+                let my = data.y + Math.sin(angle) * 50;
+                lineCtx.beginPath();
+                lineCtx.arc(mx, my, 7, 0, Math.PI*2);
+                lineCtx.fillStyle = (i < boughtMinis) ? '#4caf50' : '#f33';
+                lineCtx.fill();
+                lineCtx.lineWidth = 2;
+                lineCtx.strokeStyle = '#111';
+                lineCtx.stroke();
+            }
         }
 
         let icon = '🔧'; 
@@ -296,18 +395,7 @@ function renderSkillTree() {
         
         nodeDiv.className = classes.join(' '); nodeDiv.style.left = data.x + 'px'; nodeDiv.style.top = data.y + 'px'; nodeDiv.innerHTML = icon;
 
-        nodeDiv.onclick = () => {
-            selectedNodeId = id; document.getElementById('nm-title').innerText = data.name; document.getElementById('nm-desc').innerText = data.desc;
-            let btnBuy = document.getElementById('nm-buy');
-            if (isUnlocked) { document.getElementById('nm-cost').innerText = "✓ ALREADY UNLOCKED"; document.getElementById('nm-cost').style.color = "#4caf50"; btnBuy.style.display = 'none'; } 
-            else {
-                document.getElementById('nm-cost').innerText = `Cost: ${fNum(data.cost)} W`; document.getElementById('nm-cost').style.color = "#ffd700"; btnBuy.style.display = 'block';
-                if (reqMet && saveData.wrenches >= data.cost) { btnBuy.disabled = false; btnBuy.innerText = 'UNLOCK'; } 
-                else if (!reqMet) { btnBuy.disabled = true; btnBuy.innerText = 'PATH LOCKED'; } 
-                else { btnBuy.disabled = true; btnBuy.innerText = 'NOT ENOUGH W'; }
-            }
-            document.getElementById('node-modal').style.display = 'block'; vibe(10);
-        };
+        nodeDiv.onclick = () => { openNodeModal(id); vibe(10); };
         container.appendChild(nodeDiv);
     }
 }
@@ -317,13 +405,28 @@ document.getElementById('nm-close').addEventListener('click', () => { document.g
 document.getElementById('btn-show-stats').addEventListener('click', () => { updateStatsModal(); document.getElementById('stats-modal').style.display = 'block'; vibe(10); });
 document.getElementById('btn-close-stats').addEventListener('click', () => { document.getElementById('stats-modal').style.display = 'none'; vibe(10); });
 
+document.getElementById('nm-buy-mini').addEventListener('click', () => {
+    if (!selectedNodeId) return;
+    let data = SKILL_TREE[selectedNodeId];
+    let miniCost = Math.max(1, Math.floor(data.cost * 0.15));
+    let boughtMinis = saveData.miniNodes[selectedNodeId] || 0;
+
+    if (boughtMinis < 6 && saveData.wrenches >= miniCost) {
+        saveData.wrenches -= miniCost;
+        saveData.miniNodes[selectedNodeId] = boughtMinis + 1;
+        saveGame(); calculateStats(); renderSkillTree();
+        openNodeModal(selectedNodeId); // Refresh modal visually
+        vibe(15); sfx.cash();
+    }
+});
+
 document.getElementById('nm-buy').addEventListener('click', () => {
     if (!selectedNodeId) return; let data = SKILL_TREE[selectedNodeId];
     if (saveData.wrenches >= data.cost) {
         saveData.wrenches -= data.cost; saveData.unlocked.push(selectedNodeId);
-        saveGame(); calculateStats(); 
+        saveGame(); calculateStats(); renderSkillTree(); 
         document.getElementById('node-modal').style.display = 'none';
-        renderSkillTree(); vibe(30); sfx.cash();
+        vibe(30); sfx.cash();
     }
 });
 
@@ -626,8 +729,7 @@ function checkWin() {
     if (windows.every(w => w.hp === 0)) {
         gameState = 'WIN'; sfx.win(); stopMusic();
         
-        // LEVEL CLEAR BONUSES
-        let baseClear = (100 * level) + statClearBonusFlat;
+        let baseClear = (10 * level) + statClearBonusFlat;
         let clearReward = baseClear * statClearBonusMult * statWrenchMult * (isGrinding ? statGrindYield : 1.0);
         let interestReward = saveData.wrenches * statInterestRate;
         wrenchesEarnedThisRun += clearReward + interestReward;
@@ -729,7 +831,6 @@ function drawRender() {
     let totalWrenchesLive = Math.floor(saveData.wrenches + wrenchesEarnedThisRun);
     ctx.fillText(`WRENCHES:${fNum(totalWrenchesLive)}`, 10, 20);
     
-    // UPDATED GRINDING HUD
     if (isGrinding) { ctx.fillStyle = '#f55'; ctx.font = '8px "Press Start 2P", monospace'; ctx.fillText(`[YIELD ${(statGrindYield * 100).toFixed(0)}%]`, 210, 18); }
     
     ctx.fillStyle = '#fff'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillText(`LVL:${level}`, 10, 38);
