@@ -15,7 +15,7 @@ function fNum(num) {
 let saveData = { wrenches: 0, unlocked: ['node_base'], maxLevel: 1 };
 let selectedCheckpoint = 1; let selectedNodeId = null;
 
-// MASSIVE 89-NODE SKILL TREE
+// MASSIVE 90-NODE SKILL TREE
 const SKILL_TREE = {
     'node_base': { x: 1500, y: 1500, name: 'Apprentice', cost: 0, req: null, desc: 'Ready to work.', type: 'core' },
     
@@ -104,6 +104,12 @@ const SKILL_TREE = {
     'nrf_5': { x: 2250, y: 2100, name: 'Safety Audit', cost: 50000000, req: 'nrf_4', desc: 'Bricks do 50% less DMG', type: 'notable' },
     'nrf_max': { x: 2400, y: 2100, name: 'OSHA Mandate', cost: 1e9, req: 'nrf_5', desc: 'Ralph speed & damage reduced by 75%', type: 'keystone' },
 
+    // NEW TURBO TIMER FORK (Off Ralph Nerf)
+    'trb_1': { x: 1800, y: 2250, name: 'Snooze Button', cost: 50000, req: 'nrf_2', desc: '+2s Turbo Timer', type: 'normal' },
+    'trb_2': { x: 1800, y: 2400, name: 'Deadline Ext', cost: 500000, req: 'trb_1', desc: '+3s Turbo Timer', type: 'normal' },
+    'trb_3': { x: 1800, y: 2550, name: 'Time Mgmt', cost: 5000000, req: 'trb_2', desc: '+5s Turbo Timer', type: 'notable' },
+    'trb_max': { x: 1800, y: 2700, name: 'Time Lord', cost: 1e9, req: 'trb_3', desc: '+15s Turbo Timer', type: 'keystone' },
+
     // === WEST: AGILITY (Cooldown & Speed) ===
     'agi_1': { x: 1350, y: 1500, name: 'Light Handle', cost: 10, req: 'node_base', desc: 'Cooldown: 180ms', type: 'normal' },
     'agi_2': { x: 1200, y: 1500, name: 'Quick Wrists', cost: 100, req: 'agi_1', desc: 'Cooldown: 150ms', type: 'normal' },
@@ -135,7 +141,7 @@ const SKILL_TREE = {
 
 function loadGame() {
     try {
-        let saved = localStorage.getItem('fixItFelixRPG_v4'); 
+        let saved = localStorage.getItem('fixItFelixRPG_v5'); 
         if (saved) {
             let parsed = JSON.parse(saved);
             saveData.wrenches = parsed.wrenches || 0;
@@ -146,9 +152,7 @@ function loadGame() {
     updateCheckpointUI();
 }
 
-function saveGame() {
-    try { localStorage.setItem('fixItFelixRPG_v4', JSON.stringify(saveData)); } catch (e) { console.warn("Save failed", e); }
-}
+function saveGame() { try { localStorage.setItem('fixItFelixRPG_v5', JSON.stringify(saveData)); } catch (e) { console.warn("Save failed", e); } }
 
 function hasSkill(id) { return saveData.unlocked.includes(id); }
 function getMaxCheckpoint() { return Math.max(1, Math.floor((saveData.maxLevel - 1) / 10) * 10 + 1); }
@@ -163,6 +167,7 @@ let statFixDmg = 50; let statCritChance = 0; let statCritMult = 2;
 let statShieldUnlocked = false; let statShieldRegenTime = 900; let statShieldOnRoundStart = false;
 let statRotChance = 0; let statRotMult = 0; let statLifesteal = 0; let statRegenPerSec = 0;
 let statRalphSpeedMult = 1.0; let statEnemyDmgMult = 1.0; let statMultiStrike = 0; let statIFrames = 90;
+let statTurboTimeBonus = 0;
 
 function calculateStats() {
     // HP
@@ -220,6 +225,13 @@ function calculateStats() {
     statMultiStrike = 0; if (hasSkill('ms_1')) statMultiStrike = 0.1; if (hasSkill('ms_2')) statMultiStrike = 0.25; 
     if (hasSkill('ms_3')) statMultiStrike = 0.50; if (hasSkill('ms_4')) statMultiStrike = 1.0; 
     if (hasSkill('ms_5')) statMultiStrike = 1.5; if (hasSkill('ms_max')) statMultiStrike = 2.0;
+
+    // TURBO TIMER
+    statTurboTimeBonus = 0;
+    if (hasSkill('trb_1')) statTurboTimeBonus += 2;
+    if (hasSkill('trb_2')) statTurboTimeBonus += 3;
+    if (hasSkill('trb_3')) statTurboTimeBonus += 5;
+    if (hasSkill('trb_max')) statTurboTimeBonus += 15;
 }
 
 function updateStatsModal() {
@@ -232,6 +244,7 @@ function updateStatsModal() {
     document.getElementById('s-ms').innerText = '+' + statMultiStrike.toFixed(2) + ' Hits';
     document.getElementById('s-dodge').innerText = (statDodgeChance * 100).toFixed(0) + '%';
     document.getElementById('s-nerf').innerText = '-' + ((1 - statEnemyDmgMult) * 100).toFixed(0) + '% Dmg';
+    document.getElementById('s-trb').innerText = '+' + statTurboTimeBonus + ' Sec';
     document.getElementById('s-wm').innerText = fNum(statWrenchMult) + 'x';
 }
 
@@ -252,7 +265,7 @@ function renderSkillTree() {
         let icon = '🔧'; 
         if (id.startsWith('pow') || id.startsWith('crit') || id.startsWith('rot')) icon = '🔨';
         else if (id.startsWith('tnk') || id.startsWith('shld') || id.startsWith('reg')) icon = '🛡️';
-        else if (id.startsWith('eco') || id.startsWith('nrf')) icon = '💰';
+        else if (id.startsWith('eco') || id.startsWith('nrf') || id.startsWith('trb')) icon = '💰';
         else if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) icon = '⚡';
 
         let nodeDiv = document.createElement('div'); let classes = ['skill-node', `node-${data.type}`]; 
@@ -371,6 +384,10 @@ let level = 1; let hp = 100, maxHp = 100; let gameState = 'START';
 let frameCount = 0, cameraShake = 0, wrenchesEarnedThisRun = 0;
 let currentWindowMaxHp = 0, currentBrickDmg = 0, currentBirdDmg = 0; let isGrinding = false; 
 
+// TURBO VARIABLES
+let isTurboMode = false;
+let turboTimeRemaining = 0; // tracked in frames
+
 let felix = { col: 1, row: 4, actionTimer: 0, xOffset: 0, yOffset: 0, invincibleTimer: 0, shieldActive: false, shieldRegenTimer: 0, lastSwingTime: 0 };
 let ralph = { x: 180, y: 100, targetX: 180, timer: 0, state: 'IDLE' };
 let windows = []; let bricks = []; let particles = []; let birds = []; let floatTexts = [];
@@ -381,19 +398,27 @@ function initLevel() {
     currentBrickDmg = Math.floor(35 * Math.pow(1.15, level - 1) * statEnemyDmgMult);
     currentBirdDmg = Math.floor(20 * Math.pow(1.15, level - 1) * statEnemyDmgMult);
     isGrinding = (level < saveData.maxLevel);
+    
+    isTurboMode = (level % 10 === 0);
+    turboTimeRemaining = (10 + statTurboTimeBonus) * 60; 
 
     let brokenCount = 0;
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-            let hp = 0; if (Math.random() < 0.2 + (level * 0.02)) hp = Math.floor(currentWindowMaxHp * (Math.random() * 0.9 + 0.1));
-            if (hp > 0) brokenCount++;
-            windows.push({ col: c, row: r, hp: hp, maxHp: currentWindowMaxHp, anim: 0, rotTimer: 0, rotDmg: 0 });
+            let damage = 0; 
+            if (Math.random() < (isTurboMode ? 0.8 : 0.2 + (level * 0.02))) {
+                damage = Math.floor(currentWindowMaxHp * (Math.random() * 0.9 + 0.1));
+                if (isTurboMode) damage = Math.floor(currentWindowMaxHp * (Math.random() * 0.2 + 0.8)); // 80-100% damaged in turbo
+            }
+            if (damage > 0) brokenCount++;
+            windows.push({ col: c, row: r, hp: damage, maxHp: currentWindowMaxHp, anim: 0, rotTimer: 0, rotDmg: 0 });
         }
     }
     if (brokenCount === 0) { windows[0].hp = currentWindowMaxHp; windows[0].maxHp = currentWindowMaxHp; }
     
     felix.col = 1; felix.row = 4; felix.invincibleTimer = 0;
     if (statShieldOnRoundStart && statShieldUnlocked) { felix.shieldActive = true; felix.shieldRegenTimer = 0; }
+    ralph.state = 'IDLE';
 }
 
 function spawnParticles(x, y, color, count) { for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8 - 2, life: 20 + Math.random()*20, color: color }); }
@@ -404,6 +429,15 @@ function updatePhysics() {
     frameCount++; if (cameraShake > 0) cameraShake--;
     if (felix.invincibleTimer > 0) felix.invincibleTimer--;
     if (felix.actionTimer > 0) felix.actionTimer--;
+
+    if (isTurboMode) {
+        if (turboTimeRemaining > 0) {
+            turboTimeRemaining--;
+        } else if (ralph.state !== 'RAGE') {
+            ralph.state = 'RAGE';
+            spawnFloatText(canvas.width/2, 100, "TIME'S UP!", "#f00");
+        }
+    }
 
     // Shield Regen
     if (statShieldUnlocked && !felix.shieldActive && felix.shieldRegenTimer > 0) {
@@ -418,13 +452,12 @@ function updatePhysics() {
         spawnFloatText(fx, fy - 30, `+${fNum(statRegenPerSec)}`, "#0f0");
     }
 
-    // Auto-Caulk (Repair Over Time) Processor
+    // Auto-Caulk Processor
     windows.forEach(w => {
-        if (w.hp > 0 && w.rotTimer > 0 && frameCount % 30 === 0) { // Tick twice a second
+        if (w.hp > 0 && w.rotTimer > 0 && frameCount % 30 === 0) {
             w.rotTimer--; let dmg = w.rotDmg;
             w.hp -= dmg; if (w.hp < 0) w.hp = 0; w.anim = 10;
             wrenchesEarnedThisRun += (dmg / 100) * statWrenchMult * (isGrinding ? 0.25 : 1.0);
-            
             let wx = PAD_X + w.col * CELL_W + CELL_W/2; let wy = PAD_Y + w.row * CELL_H + CELL_H/2;
             spawnParticles(wx, wy, '#fa0', 5); spawnFloatText(wx + (Math.random()-0.5)*20, wy, `-${fNum(dmg)}`, "#fa0");
             if (w.hp === 0) { sfx.fixComplete(); checkWin(); }
@@ -435,6 +468,8 @@ function updatePhysics() {
 
     // Ralph Behavior
     let speed = (1.5 + (level * 0.1)) * statRalphSpeedMult;
+    if (isTurboMode) speed *= 1.8; // Turbo boost
+    
     if (ralph.state === 'IDLE') {
         if (Math.abs(ralph.x - ralph.targetX) < speed) {
             ralph.x = ralph.targetX; ralph.timer++;
@@ -442,12 +477,28 @@ function updatePhysics() {
         } else { ralph.x += (ralph.x < ralph.targetX) ? speed : -speed; }
     } else if (ralph.state === 'THROW') {
         ralph.timer++;
-        if (ralph.timer === 15) { bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5, vy: -2, rot: 0 }); sfx.throw(); cameraShake = 5; }
+        if (ralph.timer === 15) { 
+            bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5, vy: -2, rot: 0 }); 
+            if (isTurboMode && Math.random() < 0.4) {
+                 bricks.push({ x: ralph.x + 15, y: ralph.y + 20, vx: (Math.random()-0.5)*0.5 + 0.5, vy: -2.5, rot: 0 }); // Extra brick in Turbo
+            }
+            sfx.throw(); cameraShake = 5; 
+        }
         if (ralph.timer > 30) {
             ralph.state = 'IDLE'; ralph.timer = 0;
             let targetCol = Math.random() < 0.6 ? felix.col : Math.floor(Math.random() * COLS);
             ralph.targetX = PAD_X + targetCol * CELL_W + CELL_W/2;
             if(Math.random() < 0.3) { sfx.stomp(); cameraShake = 15; vibe(50); }
+        }
+    } else if (ralph.state === 'RAGE') {
+        // Punishing rage mode
+        ralph.timer++;
+        if (ralph.timer > 4) { 
+            bricks.push({ x: ralph.x, y: ralph.y + 20, vx: (Math.random()-0.5)*2, vy: -1, rot: 0 });
+            sfx.throw(); cameraShake = 2;
+            ralph.timer = 0;
+            ralph.targetX = PAD_X + Math.random() * (COLS * CELL_W);
+            ralph.x = ralph.targetX;
         }
     }
 
@@ -512,7 +563,6 @@ function handleFix() {
     let wx = PAD_X + w.col * CELL_W + CELL_W/2; let wy = PAD_Y + w.row * CELL_H + CELL_H/2;
 
     if (w && w.hp > 0) {
-        // Multi-Strike Loop Calculation
         let hits = 1;
         hits += Math.floor(statMultiStrike);
         if (Math.random() < (statMultiStrike % 1)) hits++;
@@ -531,15 +581,13 @@ function handleFix() {
             wrenchesEarnedThisRun += (dmg / 100) * statWrenchMult * (isGrinding ? 0.25 : 1.0);
             spawnParticles(wx, wy, '#fff', 10);
             
-            // Auto-Caulk Proc check
             if (w.hp > 0 && Math.random() < statRotChance) {
-                w.rotTimer = 10; // 5 real seconds
+                w.rotTimer = 10; 
                 w.rotDmg = statFixDmg * statRotMult;
                 spawnFloatText(wx, wy - 30, "AUTO-CAULK!", "#fa0");
             }
         }
         
-        // Lifesteal calculation
         if (statLifesteal > 0 && hp < maxHp) {
             let heal = totalDmgThisSwing * statLifesteal;
             hp = Math.min(maxHp, hp + heal);
@@ -572,6 +620,18 @@ function drawRender() {
     ctx.fillStyle = '#511'; 
     for(let y=160; y<canvas.height; y+=20) { let offset = (y/20)%2===0 ? 0 : 20; for(let x=40; x<320; x+=40) ctx.fillRect(x + offset, y, 38, 18); }
 
+    // BOSS TURBO UI ALERTS
+    if (isTurboMode) {
+        ctx.fillStyle = (turboTimeRemaining < 180 && frameCount % 10 < 5) ? '#f00' : '#fa0';
+        ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'center';
+        if (turboTimeRemaining > 0) {
+            ctx.fillText(`TURBO TIMER: ${(turboTimeRemaining/60).toFixed(1)}s`, canvas.width/2, 80);
+        } else {
+            ctx.fillText(`RAGE MODE!`, canvas.width/2, 80);
+        }
+        ctx.textAlign = 'left';
+    }
+
     windows.forEach(w => {
         let x = PAD_X + w.col * CELL_W; let y = PAD_Y + w.row * CELL_H;
         let animShake = w.anim > 0 ? (Math.random()-0.5)*4 : 0; if(w.anim > 0) w.anim--;
@@ -590,7 +650,6 @@ function drawRender() {
             if (crackRatio <= 0.6) { ctx.moveTo(x+35, y+45); ctx.lineTo(x+25, y+25); }
             if (crackRatio <= 0.3) { ctx.moveTo(x+5, y+45); ctx.lineTo(x+15, y+25); drawRect(x+15, y+15, 10, 10, '#000'); } 
             
-            // Draw visual fire indicator for burning Auto-Caulk status
             if (w.rotTimer > 0) { drawRect(x+15, y+50, 20, 5, '#fa0'); }
             ctx.stroke();
         }
@@ -598,7 +657,11 @@ function drawRender() {
 
     ctx.save(); ctx.translate(ralph.x, ralph.y);
     if(ralph.state === 'THROW') ctx.translate(0, -10);
-    drawRect(-25, -20, 50, 40, '#d50'); drawRect(-15, -35, 30, 25, '#fba'); drawRect(-35, -20, 15, 30, '#fba'); drawRect(20, -20, 15, 30, '#fba');
+    
+    // Ralph turns Red in Boss Mode
+    let ralphColor = isTurboMode ? (turboTimeRemaining <= 0 ? '#f00' : '#f40') : '#d50';
+    drawRect(-25, -20, 50, 40, ralphColor); 
+    drawRect(-15, -35, 30, 25, '#fba'); drawRect(-35, -20, 15, 30, '#fba'); drawRect(20, -20, 15, 30, '#fba');
     drawRect(-8, -28, 4, 4, '#000'); drawRect(4, -28, 4, 4, '#000'); drawRect(-10, -32, 8, 2, '#000'); drawRect(2, -32, 8, 2, '#000'); ctx.restore();
 
     if (felix.invincibleTimer === 0 || Math.floor(frameCount / 4) % 2 === 0) {
@@ -650,7 +713,13 @@ function drawRender() {
         ctx.fillStyle = '#fff'; ctx.fillText('Opening Skill Map...', canvas.width/2, canvas.height/2 + 70); ctx.textAlign = 'left';
     } else if (gameState === 'WIN') {
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.fillStyle = '#0f0'; ctx.font = '20px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillText('LEVEL CLEARED!', canvas.width/2, canvas.height/2); ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f0'; ctx.font = '20px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillText('LEVEL CLEARED!', canvas.width/2, canvas.height/2); 
+        
+        // Checkpoint visual notification
+        if (level % 10 === 0 && !isGrinding) {
+            ctx.fillStyle = '#ff0'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillText('CHECKPOINT UNLOCKED!', canvas.width/2, canvas.height/2 + 30); 
+        }
+        ctx.textAlign = 'left';
     }
 }
 
