@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fix-It Felix Jr. - RPG Edition</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -35,13 +35,19 @@
                     <div class="wrench-count">WRENCHES: <span id="ui-wrenches">0</span></div>
                 </div>
                 
+                <div id="zoom-controls">
+                    <button id="btn-zoom-in" class="zoom-btn">+</button>
+                    <button id="btn-zoom-out" class="zoom-btn">-</button>
+                </div>
+
                 <div id="map-viewport">
                     <div id="map-content">
-                        <canvas id="skill-lines" width="1000" height="1000"></canvas>
+                        <canvas id="skill-lines" width="3000" height="3000"></canvas>
                         <div id="nodes-container">
                             </div>
                     </div>
                 </div>
+                
                 <button id="btn-restart-run">PLAY</button>
             </div>
 
