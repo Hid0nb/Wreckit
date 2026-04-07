@@ -70,30 +70,30 @@ const SKILL_TREE = {
     'shld_2': { x: 2100, y: 1800, name: 'Fast Charger', cost: 50000, req: 'shld_1', desc: 'Recharges 5s.', type: 'notable' },
     'shld_max': { x: 2250, y: 1950, name: 'Reactive', cost: 2000000, req: 'shld_2', desc: 'Ready every level.', type: 'keystone' },
 
-    // Tank Fork: Regen & Lifesteal
-    'reg_1': { x: 2100, y: 1350, name: 'First Aid', cost: 5000, req: 'tnk_4', desc: '+100 HP per second', type: 'normal' },
-    'reg_2': { x: 2100, y: 1200, name: 'Paramedic', cost: 50000, req: 'reg_1', desc: '+5,000 HP per sec', type: 'normal' },
-    'reg_3': { x: 2100, y: 1050, name: 'Cybernetic Cells', cost: 500000, req: 'reg_2', desc: '+250,000 HP per sec', type: 'notable' },
-    'reg_4': { x: 2100, y: 900, name: 'Wolverine Blood', cost: 5000000, req: 'reg_3', desc: '+10M HP per sec', type: 'normal' },
-    'reg_5': { x: 2100, y: 750, name: 'Phoenix Ash', cost: 50000000, req: 'reg_4', desc: '+500M HP per sec', type: 'notable' },
-    'reg_max': { x: 2100, y: 600, name: 'Synergistic Repair', cost: 1e9, req: 'reg_5', desc: 'LIFESTEAL: Heal 2% of FIX DMG dealt!', type: 'keystone' },
+    // Tank Fork: Regen & Lifesteal (REBALANCED)
+    'reg_1': { x: 2100, y: 1350, name: 'First Aid', cost: 5000, req: 'tnk_4', desc: '+10 HP per second', type: 'normal' },
+    'reg_2': { x: 2100, y: 1200, name: 'Paramedic', cost: 50000, req: 'reg_1', desc: '+100 HP per sec', type: 'normal' },
+    'reg_3': { x: 2100, y: 1050, name: 'Cybernetic Cells', cost: 500000, req: 'reg_2', desc: '+1,000 HP per sec', type: 'notable' },
+    'reg_4': { x: 2100, y: 900, name: 'Wolverine Blood', cost: 5000000, req: 'reg_3', desc: '+10,000 HP per sec', type: 'normal' },
+    'reg_5': { x: 2100, y: 750, name: 'Phoenix Ash', cost: 50000000, req: 'reg_4', desc: '+100,000 HP per sec', type: 'notable' },
+    'reg_max': { x: 2100, y: 600, name: 'Synergistic Repair', cost: 1e9, req: 'reg_5', desc: 'LIFESTEAL: Heal 1% of FIX DMG dealt!', type: 'keystone' },
 
-    // === SOUTH: ECONOMY (Wrenches) ===
-    'eco_1': { x: 1500, y: 1650, name: 'Union Dues', cost: 10, req: 'node_base', desc: '+20% Wrenches', type: 'normal' },
-    'eco_2': { x: 1500, y: 1800, name: 'Pensions', cost: 100, req: 'eco_1', desc: '+50% Wrenches', type: 'normal' },
-    'eco_3': { x: 1500, y: 1950, name: 'Foreman', cost: 1000, req: 'eco_2', desc: '+200% Wrenches', type: 'notable' },
-    'eco_4': { x: 1500, y: 2100, name: 'Kickbacks', cost: 15000, req: 'eco_3', desc: 'Wrenches x5', type: 'normal' },
-    'eco_5': { x: 1500, y: 2250, name: 'Monopoly', cost: 250000, req: 'eco_4', desc: 'Wrenches x20', type: 'normal' },
-    'eco_6': { x: 1500, y: 2400, name: 'Tax Fraud', cost: 5000000, req: 'eco_5', desc: 'Wrenches x100', type: 'notable' },
-    'eco_7': { x: 1500, y: 2550, name: 'Infinite Wealth', cost: 50000000, req: 'eco_6', desc: 'Wrenches x1,000', type: 'normal' },
-    'eco_max': { x: 1500, y: 2700, name: 'Capitalism', cost: 1e9, req: 'eco_7', desc: 'Wrenches x10,000', type: 'keystone' },
+    // === SOUTH: ECONOMY (Wrenches - REBALANCED) ===
+    'eco_1': { x: 1500, y: 1650, name: 'Union Dues', cost: 10, req: 'node_base', desc: '+10% Wrenches', type: 'normal' },
+    'eco_2': { x: 1500, y: 1800, name: 'Pensions', cost: 100, req: 'eco_1', desc: '+25% Wrenches', type: 'normal' },
+    'eco_3': { x: 1500, y: 1950, name: 'Foreman', cost: 1000, req: 'eco_2', desc: '+50% Wrenches', type: 'notable' },
+    'eco_4': { x: 1500, y: 2100, name: 'Kickbacks', cost: 15000, req: 'eco_3', desc: 'Wrenches x2', type: 'normal' },
+    'eco_5': { x: 1500, y: 2250, name: 'Monopoly', cost: 250000, req: 'eco_4', desc: 'Wrenches x3', type: 'normal' },
+    'eco_6': { x: 1500, y: 2400, name: 'Tax Fraud', cost: 5000000, req: 'eco_5', desc: 'Wrenches x5', type: 'notable' },
+    'eco_7': { x: 1500, y: 2550, name: 'Infinite Wealth', cost: 50000000, req: 'eco_6', desc: 'Wrenches x10', type: 'normal' },
+    'eco_max': { x: 1500, y: 2700, name: 'Capitalism', cost: 1e9, req: 'eco_7', desc: 'Wrenches x50', type: 'keystone' },
 
-    // Economy Extension
-    'eco_8': { x: 1350, y: 2700, name: 'Billionaire', cost: 5e10, req: 'eco_max', desc: 'Wrenches x5', type: 'normal' },
-    'eco_9': { x: 1200, y: 2700, name: 'Trillionaire', cost: 1e12, req: 'eco_8', desc: 'Wrenches x10', type: 'notable' },
-    'eco_10': { x: 1050, y: 2700, name: 'Economy Breaker', cost: 5e13, req: 'eco_9', desc: 'Wrenches x50', type: 'normal' },
-    'eco_11': { x: 900, y: 2700, name: 'Galactic Mint', cost: 1e15, req: 'eco_10', desc: 'Wrenches x100', type: 'notable' },
-    'eco_max2': { x: 750, y: 2700, name: 'Post-Scarcity', cost: 1e16, req: 'eco_11', desc: 'Wrenches x1,000', type: 'keystone' },
+    // Economy Extension (REBALANCED)
+    'eco_8': { x: 1350, y: 2700, name: 'Billionaire', cost: 5e10, req: 'eco_max', desc: 'Wrenches x2', type: 'normal' },
+    'eco_9': { x: 1200, y: 2700, name: 'Trillionaire', cost: 1e12, req: 'eco_8', desc: 'Wrenches x3', type: 'notable' },
+    'eco_10': { x: 1050, y: 2700, name: 'Economy Breaker', cost: 5e13, req: 'eco_9', desc: 'Wrenches x5', type: 'normal' },
+    'eco_11': { x: 900, y: 2700, name: 'Galactic Mint', cost: 1e15, req: 'eco_10', desc: 'Wrenches x10', type: 'notable' },
+    'eco_max2': { x: 750, y: 2700, name: 'Post-Scarcity', cost: 1e16, req: 'eco_11', desc: 'Wrenches x50', type: 'keystone' },
 
     // Economy Fork: Clear Bonus
     'clr_1': { x: 1350, y: 1950, name: 'Job Well Done', cost: 5000, req: 'eco_3', desc: '+50 Base Clear Bonus', type: 'normal' },
@@ -139,10 +139,10 @@ const SKILL_TREE = {
     'agi_9': { x: 600, y: 900, name: 'Untouchable', cost: 1e15, req: 'agi_8', desc: 'I-Frames +1s', type: 'notable' },
     'agi_max2': { x: 600, y: 750, name: 'The Flash', cost: 1e16, req: 'agi_9', desc: 'Instant Moves & Huge I-Frames', type: 'keystone' },
 
-    // Agility Fork: Dodge
-    'dge_1': { x: 1050, y: 1350, name: 'Lucky Shoes', cost: 500, req: 'agi_3', desc: '10% Dodge', type: 'normal' },
-    'dge_2': { x: 900, y: 1200, name: 'Ghost Step', cost: 50000, req: 'dge_1', desc: '25% Dodge', type: 'notable' },
-    'dge_max': { x: 750, y: 1050, name: 'Intangible', cost: 2000000, req: 'dge_2', desc: '50% Dodge', type: 'keystone' },
+    // Agility Fork: Dodge (REBALANCED)
+    'dge_1': { x: 1050, y: 1350, name: 'Lucky Shoes', cost: 500, req: 'agi_3', desc: '5% Dodge', type: 'normal' },
+    'dge_2': { x: 900, y: 1200, name: 'Ghost Step', cost: 50000, req: 'dge_1', desc: '10% Dodge', type: 'notable' },
+    'dge_max': { x: 750, y: 1050, name: 'Intangible', cost: 2000000, req: 'dge_2', desc: '15% Dodge', type: 'keystone' },
 
     // Agility Fork: Multi-Strike
     'ms_1': { x: 900, y: 1650, name: 'Double Tap', cost: 5000, req: 'agi_4', desc: '10% chance to Hit Twice', type: 'normal' },
@@ -157,7 +157,8 @@ function getMiniBonusDesc(id) {
     if (id.startsWith('pow') || id.startsWith('crit') || id.startsWith('rot')) return { text: '+5 Hammer DMG per node', type: 'pow' };
     if (id.startsWith('tnk') || id.startsWith('shld') || id.startsWith('reg')) return { text: '+25 Max HP per node', type: 'tnk' };
     if (id.startsWith('eco') || id.startsWith('nrf') || id.startsWith('trb') || id.startsWith('clr') || id.startsWith('grnd') || id.startsWith('int')) return { text: '+2% Wrench Mult per node', type: 'eco' };
-    if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) return { text: '+0.2% Dodge per node', type: 'agi' };
+    // Dodge mini nodes nerfed to 0.1%
+    if (id.startsWith('agi') || id.startsWith('dge') || id.startsWith('ms')) return { text: '+0.1% Dodge per node', type: 'agi' };
     return { text: '', type: 'none' };
 }
 
@@ -226,17 +227,20 @@ function calculateStats() {
     statFixDmg = (50 + dmgFlat) * dmgMult;
 
     statHammerCooldownMs = hasSkill('agi_max') ? 0 : hasSkill('agi_5') ? 30 : hasSkill('agi_4') ? 60 : hasSkill('agi_3') ? 100 : hasSkill('agi_2') ? 150 : hasSkill('agi_1') ? 180 : 200;
-    statDodgeChance = (miniAgi * 0.002) + (hasSkill('dge_1') ? 0.10 : 0) + (hasSkill('dge_2') ? 0.25 : 0) + (hasSkill('dge_max') ? 0.50 : 0);
+    
+    // REBALANCED DODGE MATH (Mini nodes give 0.1%, main nodes give 5/10/15%)
+    statDodgeChance = (miniAgi * 0.001) + (hasSkill('dge_1') ? 0.05 : 0) + (hasSkill('dge_2') ? 0.10 : 0) + (hasSkill('dge_max') ? 0.15 : 0);
     statIFrames = 90 + (hasSkill('agi_7') ? 30 : 0) + (hasSkill('agi_9') ? 60 : 0) + (hasSkill('agi_max2') ? 120 : 0);
     
     statCritChance = (hasSkill('crit_1') ? 0.10 : 0) + (hasSkill('crit_2') ? 0.30 : 0); statCritMult = hasSkill('crit_max') ? 5 : 2;
     statShieldUnlocked = hasSkill('shld_1'); statShieldRegenTime = hasSkill('shld_2') ? 300 : 900; statShieldOnRoundStart = hasSkill('shld_max');
 
-    statWrenchMult = 1.0 + (miniEco * 0.02) + (hasSkill('eco_1') ? 0.2 : 0) + (hasSkill('eco_2') ? 0.5 : 0) + (hasSkill('eco_3') ? 2.0 : 0);
-    if (hasSkill('eco_4')) statWrenchMult *= 5; if (hasSkill('eco_5')) statWrenchMult *= 20; if (hasSkill('eco_6')) statWrenchMult *= 100;
-    if (hasSkill('eco_7')) statWrenchMult *= 1000; if (hasSkill('eco_max')) statWrenchMult *= 10000;
-    if (hasSkill('eco_8')) statWrenchMult *= 5; if (hasSkill('eco_9')) statWrenchMult *= 10; if (hasSkill('eco_10')) statWrenchMult *= 50;
-    if (hasSkill('eco_11')) statWrenchMult *= 100; if (hasSkill('eco_max2')) statWrenchMult *= 1000;
+    // REBALANCED WRENCH ECONOMY MATH
+    statWrenchMult = 1.0 + (miniEco * 0.02) + (hasSkill('eco_1') ? 0.10 : 0) + (hasSkill('eco_2') ? 0.25 : 0) + (hasSkill('eco_3') ? 0.50 : 0);
+    if (hasSkill('eco_4')) statWrenchMult *= 2; if (hasSkill('eco_5')) statWrenchMult *= 3; if (hasSkill('eco_6')) statWrenchMult *= 5;
+    if (hasSkill('eco_7')) statWrenchMult *= 10; if (hasSkill('eco_max')) statWrenchMult *= 50;
+    if (hasSkill('eco_8')) statWrenchMult *= 2; if (hasSkill('eco_9')) statWrenchMult *= 3; if (hasSkill('eco_10')) statWrenchMult *= 5;
+    if (hasSkill('eco_11')) statWrenchMult *= 10; if (hasSkill('eco_max2')) statWrenchMult *= 50;
 
     statClearBonusFlat = (hasSkill('clr_1') ? 50 : 0) + (hasSkill('clr_2') ? 250 : 0);
     statClearBonusMult = hasSkill('clr_max') ? 2 : 1;
@@ -247,9 +251,10 @@ function calculateStats() {
     if (hasSkill('rot_4')) statRotChance = 0.15; if (hasSkill('rot_max')) statRotChance = 0.30;
     statRotMult = 0.2; if (hasSkill('rot_3')) statRotMult = 0.4; if (hasSkill('rot_5')) statRotMult = 1.0; if (hasSkill('rot_max')) statRotMult = 3.0;
 
-    statRegenPerSec = 0; if (hasSkill('reg_1')) statRegenPerSec += 100; if (hasSkill('reg_2')) statRegenPerSec += 5000; 
-    if (hasSkill('reg_3')) statRegenPerSec += 250000; if (hasSkill('reg_4')) statRegenPerSec += 1e7; if (hasSkill('reg_5')) statRegenPerSec += 5e8;
-    statLifesteal = hasSkill('reg_max') ? 0.02 : 0;
+    // REBALANCED REGEN MATH
+    statRegenPerSec = 0; if (hasSkill('reg_1')) statRegenPerSec += 10; if (hasSkill('reg_2')) statRegenPerSec += 100; 
+    if (hasSkill('reg_3')) statRegenPerSec += 1000; if (hasSkill('reg_4')) statRegenPerSec += 10000; if (hasSkill('reg_5')) statRegenPerSec += 100000;
+    statLifesteal = hasSkill('reg_max') ? 0.01 : 0;
 
     statRalphSpeedMult = 1.0; if (hasSkill('nrf_2')) statRalphSpeedMult -= 0.1; if (hasSkill('nrf_4')) statRalphSpeedMult -= 0.15; if (hasSkill('nrf_max')) statRalphSpeedMult -= 0.50;
     statEnemyDmgMult = 1.0; if (hasSkill('nrf_1')) statEnemyDmgMult -= 0.1; if (hasSkill('nrf_3')) statEnemyDmgMult -= 0.15; 
